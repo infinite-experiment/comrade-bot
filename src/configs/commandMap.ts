@@ -1,4 +1,5 @@
 import * as status from "../commands/status";
+import * as register from "../commands/register";
 import { DiscordInteraction } from "../types/DiscordInteraction";
 
 export type CommandHandler = {
@@ -6,5 +7,6 @@ export type CommandHandler = {
 }
 
 export const commandMap: Record<string, CommandHandler> = {
-    status
+    status,
+    register
 }

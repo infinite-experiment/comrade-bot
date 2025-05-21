@@ -14,6 +14,23 @@ export class DiscordInteraction {
     public reply(message: InteractionReplyOptions | string) {
         this._interaction.reply(message);
     }
+
+    public getMetaInfo() : MetaInfo {
+        return {
+            discordId: this.guildId ?? "",
+            userId: this.userId
+        }
+    }
+
+    public getInteraction(): ChatInputCommandInteraction{
+        return this._interaction;
+    }
 };
 
 export type CommandHandler = typeof status;
+
+
+export type MetaInfo = {
+    discordId: string;
+    userId: string;
+}

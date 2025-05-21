@@ -11,7 +11,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: DiscordInteraction) {
     try {
-        const data = await ApiService.getHealth();
+        const data = await ApiService.getHealth(interaction.getMetaInfo());
         const formattedMessage = MessageFormatters.generateHealthString(data);
         await DiscordResponses.replyWithEmbed(
             interaction,

@@ -9,3 +9,9 @@ export type HealthApiResponse = {
         }
     }
 }
+
+export type InitRegistrationResponse = {
+    ifc_id: string;
+    is_verification_initiated: boolean;
+    message?: string;
+}

@@ -1,12 +1,17 @@
 import fetch from "node-fetch";
-import { HealthApiResponse } from "../types/Responses";
+import { HealthApiResponse, InitRegistrationResponse } from "../types/Responses";
+import { MetaInfo } from "../types/DiscordInteraction";
+import { generateMetaHeaders } from "../helpers/utils";
 
 const API_URL = process.env.API_URL ?? "http://localhost:8080";
 
 export class ApiService {
-    static async getHealth(): Promise<HealthApiResponse> {
+    static async getHealth(metainfo: MetaInfo): Promise<HealthApiResponse> {
         try {
-            const res = await fetch(`${API_URL}/healthCheck`);
+            const res = await fetch(`${API_URL}/healthCheck`, {
+                method: "GET",
+                headers: generateMetaHeaders(metainfo)
+            });
             if (!res.ok) {
                 throw new Error(`Failed to fetch healthCheck: ${res.status} ${res.statusText}`);
             }
@@ -15,6 +20,25 @@ export class ApiService {
         } catch (err) {
             console.error("[ApiService.getHealth]", err);
             throw err;
+        }
+    }
+
+    static async initiateRegistration(meta: MetaInfo, ifcId: string): Promise<InitRegistrationResponse> {
+        try {
+            const payload = JSON.stringify({ifc_id: ifcId})
+            const res = await fetch(`${API_URL}/api/v1/user/register/init`, {
+                method: "POST",
+                headers: generateMetaHeaders(meta),
+                body: payload
+            });
+            if (!res.ok) {
+                throw new Error(`Failed to fetch initRegistration: ${res.status} ${res.statusText}`);
+            }
+            const data = await res.json() as InitRegistrationResponse;
+            return data;
+        } catch (err) {
+            console.error("[ApiService.initRegistation]", err);
+            throw err
         }
     }
 }
