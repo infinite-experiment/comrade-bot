@@ -1,4 +1,4 @@
-import { HealthApiResponse } from "../types/Responses";
+import { HealthApiResponse, InitRegistrationResponse } from "../types/Responses";
 
 export class MessageFormatters {
     static generateHealthString(data: HealthApiResponse) : string {
@@ -10,5 +10,24 @@ export class MessageFormatters {
           msg += `\n`;
         }
         return msg;
+    }
+
+    static makeRegistrationString(resp: InitRegistrationResponse) : string{
+      const header = resp.status
+          ? `✅ Registration successful for **${resp.ifc_id}**`
+          : `❌ Registration failed for **${resp.ifc_id}**`;
+  
+      const mainMsg = resp.message ? `${resp.message}` : '';
+  
+      const stepsMsg =
+          resp.steps && resp.steps.length
+              ? resp.steps.map(
+                    (s) =>
+                        `${s.status ? '✅' : '❌'} **${s.name}:** ${s.message}`
+                ).join('\n')
+              : '';
+  
+      return [header, mainMsg, stepsMsg].filter(Boolean).join('\n\n');
+    
     }
 }

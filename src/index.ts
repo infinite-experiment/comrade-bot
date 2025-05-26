@@ -3,6 +3,7 @@ import {Client, GatewayIntentBits, Events, Interaction} from "discord.js";
 import * as dotenv from "dotenv";
 import { DiscordInteraction } from "./types/DiscordInteraction";
 import { commandMap } from "./configs/commandMap";
+import RegisterHandler from "./commands/registerModalHandler"
 
 dotenv.config();
 
@@ -16,23 +17,30 @@ client.once(Events.ClientReady, (client) => {
 
 client.on(Events.InteractionCreate, async(interactionRaw: Interaction) => {
 
-    if(!interactionRaw.isChatInputCommand()) return;
+  if(interactionRaw.isModalSubmit()){
+    switch(interactionRaw.customId){
+      case RegisterHandler.data.name:
+        await RegisterHandler.execute(new DiscordInteraction(interactionRaw))
+    }
+  }
 
-    const command = commandMap[interactionRaw.commandName];
+  if(!interactionRaw.isChatInputCommand()) return;
 
-    if(!command) return;
+  const command = commandMap[interactionRaw.commandName];
 
-    const interaction = new DiscordInteraction(interactionRaw);
+  if(!command) return;
 
-    try {
-        await command.execute(interaction);
-      } catch (err) {
-        console.error(err);
-        await interaction.reply({
-          content: "There was an error executing this command.",
-          ephemeral: true,
-        });
-      }
+  const interaction = new DiscordInteraction(interactionRaw);
+
+  try {
+      await command.execute(interaction);
+    } catch (err) {
+      console.error(err);
+      await interaction.reply({
+        content: "There was an error executing this command.",
+        ephemeral: true,
+      });
+    }
 
 });
 

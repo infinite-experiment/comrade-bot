@@ -1,32 +1,43 @@
-import { SlashCommandBuilder } from "discord.js";
+import { ActionRowBuilder, ModalBuilder, SlashCommandBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
 import { DiscordInteraction } from "../types/DiscordInteraction";
-import { ApiService } from "../services/apiService";
+import { CUSTOM_IDS } from "../configs/constants";
 
 export const data = new SlashCommandBuilder()
     .setName("register")
     .setDescription("Register to comrade bot")
-    .addStringOption(opt => opt
-        .setName("ifc_id")
-        .setRequired(true)
-        .setDescription("Your Infinite Flight Community Id")
-    )
-
+    
 export async function execute(interaction: DiscordInteraction) {
-    // Read IFC ID
-    const ifcId = interaction.getInteraction().options.getString("ifc_id");
 
-    if(!ifcId){
-        await interaction.reply("Invalid IFC ID encountered");
-        return;
-    }
 
-    try{
-        const initRegistration = await ApiService.initiateRegistration(interaction.getMetaInfo(), ifcId);
-        console.log(initRegistration);
-    } catch(err) {
-        console.log(err);
-    }
+    const ifcIdInput = new TextInputBuilder()
+        .setCustomId("ifcId")
+        .setLabel("Enter your Infinite Flight Community Id")
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('john_doe123')
+        .setRequired(true);
 
-    await interaction.reply("Interaction failed. Please try again");
-    return
+    const lastFlightInput = new TextInputBuilder()
+        .setCustomId("lastFlight")
+        .setLabel("Enter Last VALID flt. from logbook")
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('KJFK-VABB')
+        .setRequired(true)
+        .setMinLength(9)
+        .setMaxLength(9);
+
+    const modal = new ModalBuilder()
+        .setCustomId(CUSTOM_IDS.REGISTER_MODAL)
+        .setTitle('Register for comrade bot');
+    
+    
+    modal.addComponents(
+        new ActionRowBuilder<TextInputBuilder>().addComponents(ifcIdInput),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(lastFlightInput)
+        );
+
+        const _interaction = interaction.getChatInputInteraction();
+        if(_interaction)
+            await _interaction.showModal(modal);
+        // Read IFC ID
+
 }

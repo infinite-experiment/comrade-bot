@@ -12,6 +12,20 @@ export type HealthApiResponse = {
 
 export type InitRegistrationResponse = {
     ifc_id: string;
-    is_verification_initiated: boolean;
+    status: boolean;
     message?: string;
+    steps: RegistrationStep[]
 }
+
+type RegistrationStep = {
+    name: string;
+    status: boolean;
+    message: string;
+}
+
+export type ApiResponse<T> = {
+    status: string;
+    message: string;
+    response_time: string;
+    data?: T;
+};

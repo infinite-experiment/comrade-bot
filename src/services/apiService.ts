@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { HealthApiResponse, InitRegistrationResponse } from "../types/Responses";
+import { HealthApiResponse, InitRegistrationResponse, ApiResponse } from "../types/Responses";
 import { MetaInfo } from "../types/DiscordInteraction";
 import { generateMetaHeaders } from "../helpers/utils";
 
@@ -23,19 +23,31 @@ export class ApiService {
         }
     }
 
-    static async initiateRegistration(meta: MetaInfo, ifcId: string): Promise<InitRegistrationResponse> {
+    static async initiateRegistration(meta: MetaInfo, ifcId: string, lastFlight: string): Promise<InitRegistrationResponse> {
         try {
-            const payload = JSON.stringify({ifc_id: ifcId})
+            const payload = JSON.stringify({ifc_id: ifcId, last_flight: lastFlight})
             const res = await fetch(`${API_URL}/api/v1/user/register/init`, {
                 method: "POST",
                 headers: generateMetaHeaders(meta),
                 body: payload
             });
+
             if (!res.ok) {
                 throw new Error(`Failed to fetch initRegistration: ${res.status} ${res.statusText}`);
             }
-            const data = await res.json() as InitRegistrationResponse;
-            return data;
+
+
+            const response: ApiResponse<InitRegistrationResponse> = await res.json() as ApiResponse<InitRegistrationResponse>;
+
+            if (!response.data) {
+              throw new Error("No data received in API response");
+            }
+        
+            return response.data;
+
+
+            // const data = await res.json() as InitRegistrationResponse;
+            // return data;
         } catch (err) {
             console.error("[ApiService.initRegistation]", err);
             throw err
