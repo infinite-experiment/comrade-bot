@@ -1,42 +1,26 @@
-# --- Stage 1: Build ---
+# ─── Stage 1: Build ───────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
-
 WORKDIR /app
 
-# Copy dependency files and install (locks for reproducibility)
+# install all deps
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# Copy TypeScript and config files
+# transpile TS → JS
 COPY tsconfig.json ./
 COPY src ./src
-
-# Build the bot (outputs JS to ./dist)
 RUN npx tsc
 
-# --- Stage 2: Production ---
-FROM node:20-alpine
-
+# ─── Stage 2: Production ──────────────────────────────────────────────────────
+FROM node:20-alpine AS prod
 WORKDIR /app
 
+# only prod deps
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-# Copy the compiled code from builder
+# copy compiled output
 COPY --from=builder /app/dist ./dist
 
-# Entrypoint: run your bot!
+# run your bot
 CMD ["node", "dist/index.js"]
-
-# --- Stage 3: Dev (Optional) ---
-FROM node:20-alpine AS dev
-
-WORKDIR /app
-
-COPY package.json package-lock.json* ./
-RUN npm ci
-
-COPY tsconfig.json ./
-COPY src ./src
-
-CMD ["npx", "ts-node-dev", "src/index.ts"]
