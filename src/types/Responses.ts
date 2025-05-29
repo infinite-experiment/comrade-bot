@@ -41,6 +41,7 @@ export type FlightHistoryRecord = {
     mapUrl: string;
     callsign: string;
     violations: number;
+    duration: string;
   };
   
   export type FlightHistoryPage = {

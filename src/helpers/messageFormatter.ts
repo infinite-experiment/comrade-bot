@@ -33,10 +33,10 @@ export class MessageFormatters {
     }
     
   static makeFlightHistoryTable(records: FlightHistoryRecord[]): string {
-    if (records.length === 0) return "No flights found.";
+    if (records == null || records.length === 0) return "No flights found.";
 
     const table = new AsciiTable3()
-      .setHeading('Time', 'Route', 'Equip', 'L/V/S', 'Map');
+      .setHeading('Time', 'Route', 'Equip', 'L/V/S/D', 'Map');
 
     for (const rec of records) {
       // Format: Jan 8,20:03
@@ -52,7 +52,7 @@ export class MessageFormatters {
 
       const route = `${rec.origin}-${rec.dest}`;
       const equip = rec.equipment;
-      const lvs = `${rec.landings}/${getViolations(rec)}/${shortenServer(rec.server)}`;
+      const lvs = `${rec.landings}/${getViolations(rec)}/${shortenServer(rec.server)}/${rec.duration}`;
       const mapLink = '[🔗]';
 
       table.addRow(timeStr, route, equip, lvs, mapLink);
@@ -62,14 +62,19 @@ export class MessageFormatters {
     table.setAlign(3, AlignmentEnum.CENTER);
 
     const header = '```';
-    const footer = '```\nL - Landings | V - Violations | S - Server (E - Expert, C - Casual, T - Training)\n';
+    const footer = '```\nL - Landings | D - Duration | V - Violations | S - Server (E - Expert, C - Casual, T - Training)\n' +
+    'Map link will appear for flights that meet all of the following:\n' +
+    '- Have both origin and destination set\n' +
+    '- Duration is greater than 0 minutes\n' +
+    '- Created within the last 3 days';
 
-    const links = true ? "" :records
-      .map(
-        (rec) =>
-          `🔗 ${rec.origin}-${rec.dest} (${rec.callsign}) → ${rec.mapUrl}`
-      )
-      .join("\n");
+    const links = records
+    .filter(rec => rec.mapUrl && rec.mapUrl.trim() !== '')
+    .map(
+      rec =>
+        `🔗 ${rec.origin}-${rec.dest} (${rec.callsign}) → ${rec.mapUrl}`
+    )
+    .join("\n");
 
     return `${header}\n${table.toString()}\n${footer}\n${links}`;
   }

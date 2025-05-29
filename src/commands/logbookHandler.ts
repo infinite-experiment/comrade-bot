@@ -15,6 +15,14 @@ export async function handleFlightHistory(
   // Fetch from your API
   const data =await ApiService.getUserLogbook(interaction.getMetaInfo(), ifcId, page)
 
+  if (!data || !data.records || data.records.length === 0) {
+    await interaction.reply({
+      content: "❌ No flight history found for the provided IFC ID.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
   // Compose message
   const content = "```" + MessageFormatters.makeFlightHistoryTable(data.records) + "```";
 
