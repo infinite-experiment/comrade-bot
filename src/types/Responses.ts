@@ -29,3 +29,23 @@ export type ApiResponse<T> = {
     response_time: string;
     data?: T;
 };
+
+export type FlightHistoryRecord = {
+    origin: string;
+    dest: string;
+    timestamp: string;      // ISO8601
+    endtime: string;        // ISO8601 (or could use Date if you parse)
+    landings: number;
+    server: string;
+    equipment: string;
+    mapUrl: string;
+    callsign: string;
+    violations: number;
+  };
+  
+  export type FlightHistoryPage = {
+    page: number;
+    records: FlightHistoryRecord[];
+    error: string;
+  };
+  

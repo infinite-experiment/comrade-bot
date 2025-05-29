@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { HealthApiResponse, InitRegistrationResponse, ApiResponse } from "../types/Responses";
+import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage } from "../types/Responses";
 import { MetaInfo } from "../types/DiscordInteraction";
 import { generateMetaHeaders } from "../helpers/utils";
 
@@ -50,6 +50,33 @@ export class ApiService {
             // return data;
         } catch (err) {
             console.error("[ApiService.initRegistation]", err);
+            throw err
+        }
+    }
+
+    static async getUserLogbook(meta: MetaInfo, ifcId: string, page: number): Promise<FlightHistoryPage> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/user/${ifcId}/flights?page=${page}`, {
+                method: "GET",
+                headers: generateMetaHeaders(meta),
+            });
+
+            if (!res.ok) {
+                throw new Error(`Failed to fetch initRegistration: ${res.status} ${res.statusText}`);
+            }
+
+
+            const response: ApiResponse<FlightHistoryPage> = await res.json() as ApiResponse<FlightHistoryPage>;
+
+            if (!response.data) {
+              throw new Error("No data received in API response");
+            }
+        
+            return response.data;
+
+
+        } catch (err) {
+            console.error("[ApiService.getLogbook]", err);
             throw err
         }
     }

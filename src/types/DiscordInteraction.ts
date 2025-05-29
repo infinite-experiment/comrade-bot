@@ -1,21 +1,53 @@
-import { ChatInputCommandInteraction, InteractionReplyOptions, ModalSubmitInteraction } from "discord.js"
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ChatInputCommandInteraction, InteractionReplyOptions, MessageFlags, ModalSubmitInteraction } from "discord.js"
 
-type AnyInteraction = ChatInputCommandInteraction | ModalSubmitInteraction;
+type AnyInteraction = ChatInputCommandInteraction | ModalSubmitInteraction | ButtonInteraction;
 
 export class DiscordInteraction {
+    
     public guildId: string | null;
     public userId: string
     private _interaction: AnyInteraction
+    replied: any;
+    deferred: any;
 
     constructor(interaction: AnyInteraction) {
         this.guildId = interaction.guildId;
         this.userId = interaction.user.id;
         this._interaction = interaction;
+        this.deferred = interaction.deferred;
+        this.replied = interaction.replied;
     }
 
 
-    public reply(message: InteractionReplyOptions | string) {
+    public async reply(message: InteractionReplyOptions | string) {
         this._interaction.reply(message);
+    }
+
+    public  async editReply(message: InteractionReplyOptions | string) {
+        this._interaction.reply(message)
+    }
+
+    public isChatInputCommand(): boolean{
+        return this._interaction.isChatInputCommand()
+    }
+
+    public deferReply(ephemeral = false) {
+        if(ephemeral)
+        {
+            this._interaction.deferReply({flags: MessageFlags.Ephemeral})
+            return
+        }
+        this._interaction.deferReply()        
+
+    }
+
+
+    public getStringParam(id: string,req: boolean) :string{
+        if(this._interaction.isChatInputCommand()) {
+            const data = this._interaction.options.getString(id,req)
+            if(data) return data
+        }
+        return ""
     }
 
     public getMetaInfo() : MetaInfo {
@@ -34,6 +66,12 @@ export class DiscordInteraction {
     public getModalInputInteraction(): ModalSubmitInteraction | null {
         if(this._interaction instanceof ModalSubmitInteraction)
             return this._interaction as ModalSubmitInteraction
+        return null
+    }
+
+    public getButtonInteraction(): ButtonInteraction | null {
+        if(this._interaction.isButton())
+            return this._interaction as ButtonInteraction
         return null
     }
 };

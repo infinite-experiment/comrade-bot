@@ -4,6 +4,7 @@ import * as dotenv from "dotenv";
 import { DiscordInteraction } from "./types/DiscordInteraction";
 import { commandMap } from "./configs/commandMap";
 import RegisterHandler from "./commands/registerModalHandler"
+import { handleFlightHistory } from "./commands/logbookHandler";
 
 dotenv.config();
 
@@ -21,6 +22,15 @@ client.on(Events.InteractionCreate, async(interactionRaw: Interaction) => {
     switch(interactionRaw.customId){
       case RegisterHandler.data.name:
         await RegisterHandler.execute(new DiscordInteraction(interactionRaw))
+    }
+  }
+
+  if (interactionRaw.isButton()) {
+    // CustomId format: flights_prev_{ifcId}_{page}
+    const [prefix, direction, ifcId, pageStr] = interactionRaw.customId.split("_");
+    if (prefix === "flights" && (direction === "prev" || direction === "next")) {
+      const page = parseInt(pageStr, 10);
+      await handleFlightHistory(new DiscordInteraction(interactionRaw), page, ifcId);
     }
   }
 
