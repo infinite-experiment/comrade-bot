@@ -1,4 +1,3 @@
-import { FlightHistoryTable } from "../helpers/logbookFormatter";
 import { MessageFormatters } from "../helpers/messageFormatter";
 import { ApiService } from "../services/apiService";
 import { DiscordInteraction } from "../types/DiscordInteraction";
