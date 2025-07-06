@@ -3,7 +3,8 @@ import {Client, GatewayIntentBits, Events, Interaction} from "discord.js";
 import * as dotenv from "dotenv";
 import { DiscordInteraction } from "./types/DiscordInteraction";
 import { commandMap } from "./configs/commandMap";
-import RegisterHandler from "./commands/registerModalHandler"
+import RegisterHandler from "./commands/registerModalHandler";
+import InitServerHandler from "./commands/initServerModalHandler";
 import { handleFlightHistory } from "./commands/logbookHandler";
 
 dotenv.config();
@@ -21,7 +22,11 @@ client.on(Events.InteractionCreate, async(interactionRaw: Interaction) => {
   if(interactionRaw.isModalSubmit()){
     switch(interactionRaw.customId){
       case RegisterHandler.data.name:
-        await RegisterHandler.execute(new DiscordInteraction(interactionRaw))
+        await RegisterHandler.execute(new DiscordInteraction(interactionRaw));
+        break;
+      case InitServerHandler.data.name:
+        await InitServerHandler.execute(new DiscordInteraction(interactionRaw));
+        break;
     }
   }
 
@@ -36,6 +41,7 @@ client.on(Events.InteractionCreate, async(interactionRaw: Interaction) => {
 
   if(!interactionRaw.isChatInputCommand()) return;
 
+  console.log(interactionRaw.commandName, interactionRaw.commandGuildId)
   const command = commandMap[interactionRaw.commandName];
 
   if(!command) return;

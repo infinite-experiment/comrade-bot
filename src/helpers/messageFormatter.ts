@@ -1,37 +1,44 @@
 import { AlignmentEnum, AsciiTable3 } from "ascii-table3";
-import { FlightHistoryRecord, HealthApiResponse, InitRegistrationResponse } from "../types/Responses";
+import { FlightHistoryRecord, HealthApiResponse, InitRegistrationResponse, InitServerResponse } from "../types/Responses";
 
 export class MessageFormatters {
-    static generateHealthString(data: HealthApiResponse) : string {
-        if (!data) return "No data.";
-        let msg = `**Status:** ${data.status.toUpperCase()}\n**Uptime:** ${data.uptime}\n\n**Services:**\n`;
-        for (const [svc, status] of Object.entries(data.services)) {
-          msg += `- **${svc}**: ${status.status.toUpperCase()}`;
-          if (status.details) msg += ` (${status.details})`;
-          msg += `\n`;
-        }
-        return msg;
+  static generateHealthString(data: HealthApiResponse): string {
+    if (!data) return "No data.";
+    let msg = `**Status:** ${data.status.toUpperCase()}\n**Uptime:** ${data.uptime}\n\n**Services:**\n`;
+    for (const [svc, status] of Object.entries(data.services)) {
+      msg += `- **${svc}**: ${status.status.toUpperCase()}`;
+      if (status.details) msg += ` (${status.details})`;
+      msg += `\n`;
     }
+    return msg;
+  }
 
-    static makeRegistrationString(resp: InitRegistrationResponse) : string{
-      const header = resp.status
-          ? `✅ Registration successful for **${resp.ifc_id}**`
-          : `❌ Registration failed for **${resp.ifc_id}**`;
+  static isInitRegistration(
+    r: InitRegistrationResponse | InitServerResponse
+  ): r is InitRegistrationResponse {
+    return "ifc_id" in r;                // ‹— key that exists only on the user variant
+  }
 
-      const mainMsg = resp.message ? `${resp.message}` : '';
+  static makeRegistrationString(resp: InitRegistrationResponse | InitServerResponse): string {
+    const key = MessageFormatters.isInitRegistration(resp) ? resp.ifc_id : resp.va_code;
+    const header = resp.status
+      ? `✅ Registration successful for **${key}**`
+      : `❌ Registration failed for **${key}**`;
 
-      const stepsMsg =
-          resp.steps && resp.steps.length
-              ? resp.steps.map(
-                    (s) =>
-                        `${s.status ? '✅' : '❌'} **${s.name}:** ${s.message}`
-                ).join('\n')
-              : '';
+    const mainMsg = resp.message ? `${resp.message}` : '';
 
-      return [header, mainMsg, stepsMsg].filter(Boolean).join('\n\n');
+    const stepsMsg =
+      resp.steps && resp.steps.length
+        ? resp.steps.map(
+          (s) =>
+            `${s.status ? '✅' : '❌'} **${s.name}:** ${s.message}`
+        ).join('\n')
+        : '';
 
-    }
-    
+    return [header, mainMsg, stepsMsg].filter(Boolean).join('\n\n');
+
+  }
+
   static makeFlightHistoryTable(records: FlightHistoryRecord[]): string {
     if (records == null || records.length === 0) return "No flights found.";
 
@@ -63,18 +70,18 @@ export class MessageFormatters {
 
     const header = '```';
     const footer = '```\nL - Landings | D - Duration | V - Violations | S - Server (E - Expert, C - Casual, T - Training)\n' +
-    'Map link will appear for flights that meet all of the following:\n' +
-    '- Have both origin and destination set\n' +
-    '- Duration is greater than 0 minutes\n' +
-    '- Created within the last 3 days';
+      'Map link will appear for flights that meet all of the following:\n' +
+      '- Have both origin and destination set\n' +
+      '- Duration is greater than 0 minutes\n' +
+      '- Created within the last 3 days';
 
     const links = records
-    .filter(rec => rec.mapUrl && rec.mapUrl.trim() !== '')
-    .map(
-      rec =>
-        `🔗 ${rec.origin}-${rec.dest} (${rec.callsign}) → ${rec.mapUrl}`
-    )
-    .join("\n");
+      .filter(rec => rec.mapUrl && rec.mapUrl.trim() !== '')
+      .map(
+        rec =>
+          `🔗 ${rec.origin}-${rec.dest} (${rec.callsign}) → ${rec.mapUrl}`
+      )
+      .join("\n");
 
     return `${header}\n${table.toString()}\n${footer}\n${links}`;
   }

@@ -17,6 +17,13 @@ export type InitRegistrationResponse = {
     steps: RegistrationStep[]
 }
 
+export interface InitServerResponse {
+  va_code: string;
+  status: boolean;
+  message?: string;
+  steps: RegistrationStep[];
+}
+
 type RegistrationStep = {
     name: string;
     status: boolean;
