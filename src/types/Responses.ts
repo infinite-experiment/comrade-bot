@@ -40,15 +40,17 @@ export type ApiResponse<T> = {
 export type FlightHistoryRecord = {
     origin: string;
     dest: string;
-    timestamp: string;      // ISO8601
-    endtime: string;        // ISO8601 (or could use Date if you parse)
+    timestamp: string;
+    endtime: string;
     landings: number;
     server: string;
     equipment: string;
     mapUrl: string;
     callsign: string;
     violations: number;
-    duration: string;
+    duration: string;      // HH:MM
+    aircraft?: string;     // older API null-safety
+    livery?: string;
   };
   
   export type FlightHistoryPage = {

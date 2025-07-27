@@ -24,10 +24,10 @@ export async function execute(interaction: DiscordInteraction) {
     console.log("IN INIT SERVER")
   const vaIdInput = new TextInputBuilder()
     .setCustomId("vaId")
-    .setLabel("VA unique ID (3–4 chars)")
+    .setLabel("VA unique ID (3–5 chars)")
     .setStyle(TextInputStyle.Short)
     .setMinLength(3)
-    .setMaxLength(4)
+    .setMaxLength(5)
     .setRequired(true)
     .setPlaceholder("AAVA");
 
@@ -40,22 +40,6 @@ export async function execute(interaction: DiscordInteraction) {
     .setRequired(true)
     .setPlaceholder("Made Up Airlines Virtual");
 
-  const csPrefixInput = new TextInputBuilder()
-    .setCustomId("csPrefix")
-    .setLabel("Callsign prefix (optional)")
-    .setStyle(TextInputStyle.Short)
-    .setMaxLength(10)
-    .setRequired(false)
-    .setPlaceholder("AVA");
-
-  const csSuffixInput = new TextInputBuilder()
-    .setCustomId("csSuffix")
-    .setLabel("Callsign suffix (optional)")
-    .setStyle(TextInputStyle.Short)
-    .setMaxLength(10)
-    .setRequired(false)
-    .setPlaceholder("001");
-
   const modal = new ModalBuilder()
     .setCustomId(CUSTOM_IDS.INIT_SERVER_MODAL)
     .setTitle("Init server");
@@ -63,8 +47,6 @@ export async function execute(interaction: DiscordInteraction) {
   modal.addComponents(
     new ActionRowBuilder<TextInputBuilder>().addComponents(vaIdInput),
     new ActionRowBuilder<TextInputBuilder>().addComponents(vaNameInput),
-    new ActionRowBuilder<TextInputBuilder>().addComponents(csPrefixInput),
-    new ActionRowBuilder<TextInputBuilder>().addComponents(csSuffixInput)
   );
 
   const chatInput = interaction.getChatInputInteraction();

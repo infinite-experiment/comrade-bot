@@ -1,60 +1,123 @@
-import { MessageFormatters } from "../helpers/messageFormatter";
+/**
+ * flightHistoryHandler.ts  – wrapper-aware
+ */
+
+import {
+  ActionRowBuilder,
+  AttachmentBuilder,
+  ButtonBuilder,
+  ButtonInteraction,
+  ButtonStyle,
+  ChatInputCommandInteraction,
+  Client,
+  Interaction,
+  MessageFlags,
+} from "discord.js";
+
 import { ApiService } from "../services/apiService";
+import { renderFlightHistory } from "../helpers/TableRenderer";
 import { DiscordInteraction } from "../types/DiscordInteraction";
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, MessageFlags } from "discord.js";
+import { MessageFormatters } from "../helpers/messageFormatter";
 
+// ────────────────────────────────────────────────
+// Main worker
+// ────────────────────────────────────────────────
 export async function handleFlightHistory(
-  interaction: DiscordInteraction,
+  di: DiscordInteraction,
   page: number,
-  ifcId = ""
-) {
-    // await interaction.deferReply(true)
-    if(interaction.isChatInputCommand() && ifcId === "")
-        ifcId = interaction.getStringParam("ifc_id", true);
+  ifcId = "",
+): Promise<void> {
+  const chat = di.getChatInputInteraction();
+  const btn  = di.getButtonInteraction();
 
-  // Fetch from your API
-  const data =await ApiService.getUserLogbook(interaction.getMetaInfo(), ifcId, page)
+  if (!chat && !btn) return;                  // ignore other interactions
+  const fromSlash = !!chat;
 
-  if (!data || !data.records || data.records.length === 0) {
-    await interaction.reply({
-      content: "❌ No flight history found for the provided IFC ID.",
-      flags: MessageFlags.Ephemeral,
-    });
+  // ── 1) IFC-ID (first page only) ─────────────────
+  if (fromSlash && !ifcId) {
+    ifcId = di.getStringParam("ifc_id", true);
+  }
+
+  // ── 2) ACK once ────────────────────────────────
+  if (fromSlash) {
+    await chat!.deferReply({ flags: MessageFlags.Ephemeral });
+  } else {
+    await btn!.deferUpdate();
+  }
+
+  // ── 3) Fetch data ──────────────────────────────
+  const apiResp = await ApiService.getUserLogbook(di.getMetaInfo(), ifcId, page);
+  if (!apiResp?.records?.length) {
+    const msg = "❌ No flight history found for the provided IFC ID.";
+    if (fromSlash) await chat!.editReply(msg);
+    else           await btn!.followUp({ content: msg, flags: MessageFlags.Ephemeral });
     return;
   }
 
-  // Compose message
-  const content = "```" + MessageFormatters.makeFlightHistoryTable(data.records) + "```";
+  // ── 4) Render PNG ──────────────────────────────
+  const png  = await renderFlightHistory(apiResp.records);
+  const file = new AttachmentBuilder(png, { name: "logbook.png" });
+  const msg = MessageFormatters.makeFlightHistoryTable(apiResp.records)
 
-  // Setup buttons
-  const components: ActionRowBuilder<ButtonBuilder>[] = [];
-  const buttonRow = new ActionRowBuilder<ButtonBuilder>();
-
-  if (page > 1)
-    buttonRow.addComponents(
+  // ── 5) Pagination buttons ──────────────────────
+  const row = new ActionRowBuilder<ButtonBuilder>();
+  if (page > 1) {
+    row.addComponents(
       new ButtonBuilder()
         .setCustomId(`flights_prev_${ifcId}_${page - 1}`)
         .setLabel("Previous")
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Primary),
     );
-
-  if (data.records.length > 0) // Or check apiResp.data.hasNextPage if you have it
-    buttonRow.addComponents(
+  }
+  if (apiResp.records.length) {
+    row.addComponents(
       new ButtonBuilder()
         .setCustomId(`flights_next_${ifcId}_${page + 1}`)
         .setLabel("Next")
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Primary),
     );
+  }
 
-  if (buttonRow.components.length > 0)
-    components.push(buttonRow);
+  const editPayload = {
+    files: [file],
+    content: msg,
+    components: row.components.length ? [row] : [],
+  } as const;
 
+  // ── 6) Edit / update exactly once ───────────────
+  if (fromSlash) {
+    await chat!.editReply(editPayload);
+  } else {
+    await btn!.editReply(editPayload);
+  }
+}
 
-  // Respond or update
-  await interaction.reply({
-     components, 
-     content: MessageFormatters.makeFlightHistoryTable(data.records),
-     flags: MessageFlags.Ephemeral
-    });
-  
+// ────────────────────────────────────────────────
+// Router
+// ────────────────────────────────────────────────
+export function registerLogbookHandlers(client: Client): void {
+  client.on("interactionCreate", async (raw: Interaction) => {
+    const di = new DiscordInteraction(raw as any);
+
+    try {
+      // Slash
+      if (raw.isChatInputCommand() && raw.commandName === "logbook") {
+        return handleFlightHistory(di, 1);
+      }
+
+      // Button
+      const btn = di.getButtonInteraction();
+      if (btn) {
+        const m = btn.customId.match(/^flights_(prev|next)_(\\d+)_(\\d+)$/);
+        if (!m) return;
+        const [, , ifcId, pageStr] = m;
+        return handleFlightHistory(di, Number(pageStr), ifcId);
+      }
+    } catch (err) {
+      console.error("logbook handler error", err);
+      if (raw.isRepliable() && !raw.replied && !raw.deferred) {
+        await raw.reply({ content: "Unexpected error while fetching logbook.", flags: MessageFlags.Ephemeral });
+      }
+    }
+  });
 }
