@@ -26,17 +26,23 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
 RUN npx tsc
-
 # ─── Stage 2: Production ──────────────────────────────────────────────────────
-FROM node:20-alpine AS prod
+FROM node:20-slim AS prod
 WORKDIR /app
 
-# Install runtime dependencies only
+# Install runtime dependencies for canvas
+RUN apt-get update && apt-get install -y \
+  python3 \
+  libcairo2 \
+  libpango-1.0-0 \
+  libjpeg62-turbo \
+  libgif7 \
+  librsvg2-2 \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 
-# Copy compiled JS output from builder
 COPY --from=builder /app/dist ./dist
 
-# Run bot
 CMD ["node", "dist/index.js"]
