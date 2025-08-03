@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse } from "../types/Responses";
+import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse, LiveFlightRecord } from "../types/Responses";
 import { MetaInfo } from "../types/DiscordInteraction";
 import { generateMetaHeaders } from "../helpers/utils";
 
@@ -54,15 +54,13 @@ export class ApiService {
     static async initiateServerRegistration(
         meta: MetaInfo,
         code: string,
-        name: string,
-        prefix: string,
-        suffix: string
+        name: string
     ): Promise<InitServerResult> {
         try {
             const res = await fetch(`${API_URL}/api/v1/server/init`, {
                 method: "POST",
                 headers: generateMetaHeaders(meta),
-                body: JSON.stringify({ va_code: code, name, prefix, suffix }),
+                body: JSON.stringify({ va_code: code, name }),
             });
 
             // const raw = await res.text();
@@ -110,4 +108,30 @@ export class ApiService {
             throw err
         }
     }
+
+static async getLiveFlights(meta: MetaInfo): Promise<LiveFlightRecord[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/va/live`, {
+      method: "GET",
+      headers: generateMetaHeaders(meta),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch live flights: ${res.status} ${res.statusText}`);
+    }
+
+    const response: ApiResponse<LiveFlightRecord[]> = await res.json() as ApiResponse<LiveFlightRecord[]>;
+
+    if (!response.data) {
+      throw new Error("No data received in API response");
+    }
+
+    return response.data;
+
+  } catch (err) {
+    console.error("[ApiService.getLiveFlights]", err);
+    throw err;
+  }
+}
+
 }

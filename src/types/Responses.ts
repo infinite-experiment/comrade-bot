@@ -51,7 +51,7 @@ export type FlightHistoryRecord = {
     duration: string;      // HH:MM
     aircraft?: string;     // older API null-safety
     livery?: string;
-  };
+};
   
   export type FlightHistoryPage = {
     page: number;
@@ -59,3 +59,14 @@ export type FlightHistoryRecord = {
     error: string;
   };
   
+export interface LiveFlightRecord {
+  callsign: string;
+  username: string;
+  aircraft: string;
+  livery: string;
+  altitude: number;
+  speed: number;
+  origin: string;
+  destination: string;
+  lastReport: string;
+}
