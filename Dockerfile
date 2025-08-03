@@ -1,25 +1,28 @@
-# ─── Stage 1: Build ───────────────────────────────────────────────────────────
+# ─── Stage 1: Builder ─────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Install build dependencies for node-canvas
 RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    pixman-dev \
-    cairo-dev \
-    pango-dev \
-    jpeg-dev \
-    giflib-dev \
-    librsvg-dev \
-    build-base
+  python3 \
+  make \
+  g++ \
+  pixman-dev \
+  cairo-dev \
+  pango-dev \
+  jpeg-dev \
+  giflib-dev \
+  librsvg-dev \
+  build-base
 
+# Set Python path for node-gyp
+ENV PYTHON=/usr/bin/python3
 
-# install all deps
+# Install full dependencies including dev
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# transpile TS → JS
+# Transpile TypeScript → JavaScript
 COPY tsconfig.json ./
 COPY src ./src
 RUN npx tsc
@@ -28,12 +31,12 @@ RUN npx tsc
 FROM node:20-alpine AS prod
 WORKDIR /app
 
-# only prod deps
+# Install runtime dependencies only
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 
-# copy compiled output
+# Copy compiled JS output from builder
 COPY --from=builder /app/dist ./dist
 
-# run your bot
+# Run bot
 CMD ["node", "dist/index.js"]
