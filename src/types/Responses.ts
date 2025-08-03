@@ -17,6 +17,13 @@ export type InitRegistrationResponse = {
     steps: RegistrationStep[]
 }
 
+export interface InitServerResponse {
+  va_code: string;
+  status: boolean;
+  message?: string;
+  steps: RegistrationStep[];
+}
+
 type RegistrationStep = {
     name: string;
     status: boolean;
@@ -33,16 +40,18 @@ export type ApiResponse<T> = {
 export type FlightHistoryRecord = {
     origin: string;
     dest: string;
-    timestamp: string;      // ISO8601
-    endtime: string;        // ISO8601 (or could use Date if you parse)
+    timestamp: string;
+    endtime: string;
     landings: number;
     server: string;
     equipment: string;
     mapUrl: string;
     callsign: string;
     violations: number;
-    duration: string;
-  };
+    duration: string;      // HH:MM
+    aircraft?: string;     // older API null-safety
+    livery?: string;
+};
   
   export type FlightHistoryPage = {
     page: number;
@@ -50,3 +59,14 @@ export type FlightHistoryRecord = {
     error: string;
   };
   
+export interface LiveFlightRecord {
+  callsign: string;
+  username: string;
+  aircraft: string;
+  livery: string;
+  altitude: number;
+  speed: number;
+  origin: string;
+  destination: string;
+  lastReport: string;
+}

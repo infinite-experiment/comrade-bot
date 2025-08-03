@@ -2,13 +2,17 @@ import { REST, Routes } from "discord.js";
 import { data as statusCmd } from "./commands/status";
 import { data as logbookCmd } from "./commands/logbook";
 import { data as registerCmd } from "./commands/register";
+import { data as initServerCmd } from "./commands/initServer";
+import { data as liveCmd} from "./commands/live";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 const commands = [
   statusCmd.toJSON(),
   registerCmd.toJSON(),
-  logbookCmd.toJSON()
+  logbookCmd.toJSON(),
+  initServerCmd.toJSON(),
+  liveCmd.toJSON()
 ];
 
 
