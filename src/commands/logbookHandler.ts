@@ -18,6 +18,8 @@ import { ApiService } from "../services/apiService";
 import { renderFlightHistory } from "../helpers/TableRenderer";
 import { DiscordInteraction } from "../types/DiscordInteraction";
 import { MessageFormatters } from "../helpers/messageFormatter";
+import { FlightHistoryPage } from "../types/Responses";
+import { UnauthorizedError } from "../helpers/UnauthorizedException";
 
 // ────────────────────────────────────────────────
 // Main worker
@@ -28,7 +30,7 @@ export async function handleFlightHistory(
   ifcId = "",
 ): Promise<void> {
   const chat = di.getChatInputInteraction();
-  const btn  = di.getButtonInteraction();
+  const btn = di.getButtonInteraction();
 
   if (!chat && !btn) return;                  // ignore other interactions
   const fromSlash = !!chat;
@@ -46,16 +48,36 @@ export async function handleFlightHistory(
   }
 
   // ── 3) Fetch data ──────────────────────────────
-  const apiResp = await ApiService.getUserLogbook(di.getMetaInfo(), ifcId, page);
+  // const apiResp = await ApiService.getUserLogbook(di.getMetaInfo(), ifcId, page);
+
+  let apiResp: FlightHistoryPage = { records: [], page: 0, error: "" };  // fallback shape
+
+  try {
+    apiResp = await ApiService.getUserLogbook(di.getMetaInfo(), ifcId, page);
+  } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      const msg = `❌ You're not authorized to view this logbook.\n${err.message}`;
+      if (fromSlash) await chat!.editReply(msg);
+      else await btn!.followUp({ content: msg, flags: MessageFlags.Ephemeral });
+      return;
+    }
+
+    console.error("Unexpected error while fetching logbook:", err);
+    const msg = "❌ Unexpected error while fetching logbook.";
+    if (fromSlash) await chat!.editReply(msg);
+    else await btn!.followUp({ content: msg, flags: MessageFlags.Ephemeral });
+    return;
+  }
+
   if (!apiResp?.records?.length) {
     const msg = "❌ No flight history found for the provided IFC ID.";
     if (fromSlash) await chat!.editReply(msg);
-    else           await btn!.followUp({ content: msg, flags: MessageFlags.Ephemeral });
+    else await btn!.followUp({ content: msg, flags: MessageFlags.Ephemeral });
     return;
   }
 
   // ── 4) Render PNG ──────────────────────────────
-  const png  = await renderFlightHistory(apiResp.records);
+  const png = await renderFlightHistory(apiResp.records);
   const file = new AttachmentBuilder(png, { name: "logbook.png" });
   const msg = MessageFormatters.makeFlightHistoryTable(apiResp.records)
 

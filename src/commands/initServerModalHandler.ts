@@ -2,6 +2,7 @@ import { CUSTOM_IDS } from "../configs/constants";
 import { ApiService } from "../services/apiService";
 import { DiscordInteraction } from "../types/DiscordInteraction";
 import { MessageFormatters } from "../helpers/messageFormatter";
+import { UnauthorizedError } from "../helpers/UnauthorizedException";
 
 export const data = {
     name: CUSTOM_IDS.INIT_SERVER_MODAL
@@ -27,25 +28,43 @@ export async function execute(
         ({ vaId, prefix, suffix, discordServerId: interaction.guildId! });
     */
 
+
     try {
-        const initRegistration = await ApiService.initiateServerRegistration(interaction.getMetaInfo(), vaId, vaName);
+        const initRegistration = await ApiService.initiateServerRegistration(
+            interaction.getMetaInfo(),
+            vaId,
+            vaName
+        );
 
         if (!initRegistration.data) {
-        await interaction.reply({
-            content: "❌  Empty response from API.",
-            ephemeral: true,
-        });
-        return;
+            await interaction.reply({
+                content: "❌ Empty response from API.",
+                ephemeral: true,
+            });
+            return;
         }
 
         await interaction.reply(
-        MessageFormatters.makeRegistrationString(initRegistration.data)   // <── OK
+            MessageFormatters.makeRegistrationString(initRegistration.data)
         );
-    } catch (e) {
-        await interaction.reply({ content: "❌  No data returned.", ephemeral: true });
-        return;
 
+    } catch (e) {
+        console.error("[initiateServerRegistration]", e);
+
+        if (e instanceof UnauthorizedError) {
+            await interaction.reply({
+                content: `❌ You are not authorized to perform this action.\n${e.message}`,
+                ephemeral: true,
+            });
+            return;
+        }
+
+        await interaction.reply({
+            content: "❌ An unexpected error occurred during server registration.",
+            ephemeral: true,
+        });
     }
+
 
 }
 

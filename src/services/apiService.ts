@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse, LiveFlightRecord } from "../types/Responses";
 import { MetaInfo } from "../types/DiscordInteraction";
 import { generateMetaHeaders } from "../helpers/utils";
+import { UnauthorizedError } from "../helpers/UnauthorizedException";
 
 const API_URL = process.env.API_URL ?? "http://localhost:8080";
 
@@ -34,6 +35,12 @@ export class ApiService {
                 body: payload
             });
 
+            if (res.status === 401) {
+                const message = await res.text(); // plain-text body
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
+
+
             if (!res.ok) {
                 throw new Error(`Failed to fetch initRegistration: ${res.status} ${res.statusText}`);
             }
@@ -62,6 +69,10 @@ export class ApiService {
                 headers: generateMetaHeaders(meta),
                 body: JSON.stringify({ va_code: code, name }),
             });
+            if (res.status === 401) {
+                const message = await res.text(); // plain-text body
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
 
             // const raw = await res.text();
             // console.log("RAW RESPONSE:\n", raw);
@@ -88,6 +99,10 @@ export class ApiService {
                 method: "GET",
                 headers: generateMetaHeaders(meta),
             });
+            if (res.status === 401) {
+                const message = await res.text(); // plain-text body
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
 
             if (!res.ok) {
                 throw new Error(`Failed to fetch initRegistration: ${res.status} ${res.statusText}`);
@@ -109,29 +124,33 @@ export class ApiService {
         }
     }
 
-static async getLiveFlights(meta: MetaInfo): Promise<LiveFlightRecord[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/v1/va/live`, {
-      method: "GET",
-      headers: generateMetaHeaders(meta),
-    });
+    static async getLiveFlights(meta: MetaInfo): Promise<LiveFlightRecord[]> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/va/live`, {
+                method: "GET",
+                headers: generateMetaHeaders(meta),
+            });
+            if (res.status === 401) {
+                const message = await res.text(); // plain-text body
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch live flights: ${res.status} ${res.statusText}`);
+            if (!res.ok) {
+                throw new Error(`Failed to fetch live flights: ${res.status} ${res.statusText}`);
+            }
+
+            const response: ApiResponse<LiveFlightRecord[]> = await res.json() as ApiResponse<LiveFlightRecord[]>;
+
+            if (!response.data) {
+                throw new Error("No data received in API response");
+            }
+
+            return response.data;
+
+        } catch (err) {
+            console.error("[ApiService.getLiveFlights]", err);
+            throw err;
+        }
     }
-
-    const response: ApiResponse<LiveFlightRecord[]> = await res.json() as ApiResponse<LiveFlightRecord[]>;
-
-    if (!response.data) {
-      throw new Error("No data received in API response");
-    }
-
-    return response.data;
-
-  } catch (err) {
-    console.error("[ApiService.getLiveFlights]", err);
-    throw err;
-  }
-}
 
 }
