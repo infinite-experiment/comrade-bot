@@ -42,7 +42,7 @@ export async function handleFlightHistory(
 
   // ── 2) ACK once ────────────────────────────────
   if (fromSlash) {
-    await chat!.deferReply({ flags: MessageFlags.Ephemeral });
+    await chat!.deferReply();
   } else {
     await btn!.deferUpdate();
   }
@@ -58,21 +58,21 @@ export async function handleFlightHistory(
     if (err instanceof UnauthorizedError) {
       const msg = `❌ You're not authorized to view this logbook.\n${err.message}`;
       if (fromSlash) await chat!.editReply(msg);
-      else await btn!.followUp({ content: msg, flags: MessageFlags.Ephemeral });
+      else await btn!.followUp({ content: msg });
       return;
     }
 
     console.error("Unexpected error while fetching logbook:", err);
     const msg = "❌ Unexpected error while fetching logbook.";
     if (fromSlash) await chat!.editReply(msg);
-    else await btn!.followUp({ content: msg, flags: MessageFlags.Ephemeral });
+    else await btn!.followUp({ content: msg });
     return;
   }
 
   if (!apiResp?.records?.length) {
     const msg = "❌ No flight history found for the provided IFC ID.";
     if (fromSlash) await chat!.editReply(msg);
-    else await btn!.followUp({ content: msg, flags: MessageFlags.Ephemeral });
+    else await btn!.followUp({ content: msg });
     return;
   }
 
@@ -138,7 +138,7 @@ export function registerLogbookHandlers(client: Client): void {
     } catch (err) {
       console.error("logbook handler error", err);
       if (raw.isRepliable() && !raw.replied && !raw.deferred) {
-        await raw.reply({ content: "Unexpected error while fetching logbook.", flags: MessageFlags.Ephemeral });
+        await raw.reply({ content: "Unexpected error while fetching logbook."});
       }
     }
   });

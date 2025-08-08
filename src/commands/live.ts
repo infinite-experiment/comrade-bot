@@ -25,21 +25,18 @@ export async function execute(interaction: DiscordInteraction) {
             if (err instanceof UnauthorizedError) {
                 await interaction.reply({
                     content: `❌ You're not authorized to view live flights.\n${err.message}`,
-                    ephemeral: true,
                 });
                 return;
             }
 
             await interaction.reply({
                 content: "❌ Failed to fetch live flights due to an unexpected error.",
-                ephemeral: true,
             });
             return;
         }
         if (!flights || flights.length === 0) {
             await interaction.reply({
                 content: "No live flights found for this VA.",
-                ephemeral: true,
             });
             return;
         }
