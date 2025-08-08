@@ -23,14 +23,14 @@ import { FlightHistoryRecord } from "../types/Responses";
 // Constants / styles
 // ──────────────────────────────────────────────────────────────
 
-const ROW_H          = 28;
-const FONT_FAMILY    = "DejaVu Sans Mono";
-const FONT           = `14px '${FONT_FAMILY}'`;
-const BG_HEADER      = "#1d3557";
-const FG_HEADER      = "#ffffff";
-const BG_STRIPE      = "#f5f5f5";
-const BG_VIOLATION   = "#ffe5e5";
-const BORDER_COLOUR  = "#a9a9a9";
+const ROW_H = 28;
+const FONT_FAMILY = "DejaVu Sans Mono";
+const FONT = `14px '${FONT_FAMILY}'`;
+const BG_HEADER = "#1d3557";
+const FG_HEADER = "#ffffff";
+const BG_STRIPE = "#f5f5f5";
+const BG_VIOLATION = "#ffe5e5";
+const BORDER_COLOUR = "#a9a9a9";
 
 // Pre‑register font (safe‑fail) ------------------------------------------------
 try {
@@ -38,7 +38,7 @@ try {
     "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
     FONT_FAMILY,
   );
-} catch {/* ignore if font missing */}
+} catch {/* ignore if font missing */ }
 
 // ──────────────────────────────────────────────────────────────
 // Helper: timestamp → "yyyy‑mm‑dd HH:MM"
@@ -57,7 +57,7 @@ export async function renderFlightHistory(records: FlightHistoryRecord[]): Promi
   if (records.length === 0) throw new Error("No flight records to render");
 
   // Column order expected by the user
-  const header = ["Callsign", "Srv", "Aircraft", "Time", "Ldg", "Dur"];
+  const header = ["Callsign", "Srv", "Aircraft", "Time", "Ldg", "Dur", "Route"];
 
   const dataRows: string[][] = [];
   const violationIdx: number[] = [];  // 1‑based idx of rows with >0 violations
@@ -66,6 +66,13 @@ export async function renderFlightHistory(records: FlightHistoryRecord[]): Promi
     const aircraft = r.aircraft ?? r.equipment?.split(" ")[0] ?? "";
     const compound = `${aircraft} · ${r.livery ?? ""}`.trim();
 
+    const origin = r.origin ?? "";
+    const dest = r.dest ?? "";
+    const route = origin && dest
+      ? `${origin}-${dest}`
+      : origin + "-" || "-" + dest; // one of them, if only one is set
+
+
     dataRows.push([
       r.callsign,
       r.server[0],               // E / T / C
@@ -73,6 +80,7 @@ export async function renderFlightHistory(records: FlightHistoryRecord[]): Promi
       fmtTime(r.timestamp),
       String(r.landings),
       r.duration,
+      `${r.origin}-${r.dest}`
     ]);
 
     if (r.violations && r.violations > 0) violationIdx.push(i + 1);
