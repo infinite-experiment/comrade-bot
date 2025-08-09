@@ -3,6 +3,7 @@ import { data as statusCmd } from "./commands/status";
 import { data as logbookCmd } from "./commands/logbook";
 import { data as registerCmd } from "./commands/register";
 import { data as initServerCmd } from "./commands/initServer";
+import {data as pilotCmd} from "./commands/pilot";
 import { data as liveCmd} from "./commands/live";
 import * as dotenv from "dotenv";
 
@@ -12,7 +13,8 @@ const commands = [
   registerCmd.toJSON(),
   logbookCmd.toJSON(),
   initServerCmd.toJSON(),
-  liveCmd.toJSON()
+  liveCmd.toJSON(),
+  pilotCmd.toJSON()
 ];
 
 
