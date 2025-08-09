@@ -39,7 +39,6 @@ export async function execute(interaction: DiscordInteraction) {
         if (err instanceof UnauthorizedError) {
             await interaction.reply({
                 content: `❌ You are not authorized to register.\n${err.message}`,
-                ephemeral: true,
             });
             return;
         }

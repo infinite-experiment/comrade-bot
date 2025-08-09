@@ -21,7 +21,6 @@ export const data = new SlashCommandBuilder()
    Slash command → show modal
    ────────────────────────────────────────────────────────── */
 export async function execute(interaction: DiscordInteraction) {
-    console.log("IN INIT SERVER")
   const vaIdInput = new TextInputBuilder()
     .setCustomId("vaId")
     .setLabel("VA unique ID (3–5 chars)")
@@ -31,7 +30,7 @@ export async function execute(interaction: DiscordInteraction) {
     .setRequired(true)
     .setPlaceholder("AAVA");
 
-    const vaNameInput = new TextInputBuilder()
+  const vaNameInput = new TextInputBuilder()
     .setCustomId("vaName")
     .setLabel("VA Name")
     .setStyle(TextInputStyle.Short)
