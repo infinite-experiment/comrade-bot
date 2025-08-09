@@ -153,4 +153,59 @@ export class ApiService {
         }
     }
 
+
+
+    static async syncUserToVA(meta: MetaInfo, payload: SyncUserPayload): Promise<SyncUserResult> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/va/userSync`, {
+                method: "POST",
+                headers: {
+                    ...generateMetaHeaders(meta),
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const body = (await res.json()) as SyncUserResult;
+            return body;
+        } catch (err) {
+            console.error("[ApiService.syncUserToVA]", err);
+            throw err;
+        }
+    }
+
+    static async assignUserRole(meta: MetaInfo, payload: { user_id: string; role: string }): Promise<SyncUserResult> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/va/setRole`, {
+                method: "POST",
+                headers: {
+                    ...generateMetaHeaders(meta),
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+            console.log(payload, "\n", `${API_URL}/api/v1/va/setRole`, "\n", res)
+
+            const body = (await res.json()) as SyncUserResult;
+            return body;
+        } catch (err) {
+            console.error("[ApiService.assignUserRole]", err);
+            console.log(err)
+            throw err;
+        }
+    }
+}
+
+
+
+
+export interface SyncUserPayload {
+    user_id: string;
+    callsign: string;
+}
+export interface SyncUserResult {
+    status: string;
+    message?: string;  // add this
+    data?: any;
+    error?: string;
 }

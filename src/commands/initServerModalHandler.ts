@@ -39,7 +39,6 @@ export async function execute(
         if (!initRegistration.data) {
             await interaction.reply({
                 content: "❌ Empty response from API.",
-                ephemeral: true,
             });
             return;
         }
@@ -54,14 +53,12 @@ export async function execute(
         if (e instanceof UnauthorizedError) {
             await interaction.reply({
                 content: `❌ You are not authorized to perform this action.\n${e.message}`,
-                ephemeral: true,
             });
             return;
         }
 
         await interaction.reply({
             content: "❌ An unexpected error occurred during server registration.",
-            ephemeral: true,
         });
     }
 
