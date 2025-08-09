@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev src/index.ts",
-    "deploy-commands": "ts-node src/deploy-commands.ts",
+    "deploy-cmd": "ts-node src/deploy-commands.ts",
+    "deploy-commands": "node dist/deploy-commands.js",
     "build": "tsc"
   },
   "repository": {
