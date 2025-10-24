@@ -7,6 +7,11 @@ dotenv.config();
 /**
  * Deploy slash commands to Discord
  * Supports both guild-specific (dev) and global (prod) deployment
+ *
+ * Usage:
+ *   npm run deploy              - Deploy to guild if GUILD_ID is set, otherwise global
+ *   npm run deploy:local        - Deploy to guild (requires GUILD_ID)
+ *   npm run deploy:global       - Deploy globally to all servers
  */
 async function deployCommands() {
     // Validate environment variables
@@ -24,6 +29,10 @@ async function deployCommands() {
         process.exit(1);
     }
 
+    // Check for deployment mode from command line arguments
+    const args = process.argv.slice(2);
+    const mode = args[0]; // 'local' or 'global'
+
     try {
         // Validate commands before deploying
         validateCommands();
@@ -38,14 +47,25 @@ async function deployCommands() {
         let route;
         let scope;
 
-        if (guildId) {
+        if (mode === "global") {
+            // Force global deployment
+            route = Routes.applicationCommands(clientId);
+            scope = "Global (all servers)";
+            console.log("🌍 Mode: GLOBAL deployment");
+        } else if (mode === "local" || guildId) {
             // Guild-specific deployment (instant, great for dev)
+            if (!guildId) {
+                console.error("❌ GUILD_ID environment variable is required for local deployment");
+                process.exit(1);
+            }
             route = Routes.applicationGuildCommands(clientId, guildId);
             scope = `Guild: ${guildId}`;
+            console.log("🏠 Mode: LOCAL (guild-specific) deployment");
         } else {
-            // Global deployment (takes ~1 hour to propagate, use for prod)
+            // Default to global if no mode specified and no guild ID
             route = Routes.applicationCommands(clientId);
-            scope = "Global";
+            scope = "Global (all servers)";
+            console.log("🌍 Mode: GLOBAL deployment (default)");
         }
 
         console.log(`🎯 Scope: ${scope}`);
@@ -55,8 +75,10 @@ async function deployCommands() {
 
         console.log(`\n✅ Successfully deployed ${data.length} commands!`);
 
-        if (!guildId) {
-            console.log("⏳ Note: Global commands may take up to 1 hour to update");
+        if (mode === "global" || !guildId) {
+            console.log("⏳ Note: Global commands may take up to 1 hour to update across all servers");
+        } else {
+            console.log("⚡ Guild commands are available immediately!");
         }
 
     } catch (error) {

@@ -62,6 +62,7 @@ export async function renderFlightHistory(records: FlightHistoryRecord[]): Promi
   const dataRows: string[][] = [];
   const violationIdx: number[] = [];  // 1‑based idx of rows with >0 violations
 
+
   records.forEach((r, i) => {
     const aircraft = r.aircraft ?? r.equipment?.split(" ")[0] ?? "";
     const compound = `${aircraft} · ${r.livery ?? ""}`.trim();
