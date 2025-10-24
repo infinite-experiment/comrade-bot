@@ -24,20 +24,18 @@ export class DiscordInteraction {
     }
 
     public async editReply(message: InteractionReplyOptions | string) {
-        this._interaction.reply(message)
+        return this._interaction.editReply(message)
     }
 
     public isChatInputCommand(): boolean {
         return this._interaction.isChatInputCommand()
     }
 
-    public deferReply(ephemeral = false) {
+    public async deferReply(ephemeral = false) {
         if (ephemeral) {
-            this._interaction.deferReply({ flags: MessageFlags.Ephemeral })
-            return
+            return this._interaction.deferReply({ flags: MessageFlags.Ephemeral })
         }
-        this._interaction.deferReply()
-
+        return this._interaction.deferReply()
     }
 
 

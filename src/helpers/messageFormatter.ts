@@ -1,5 +1,5 @@
 import { AlignmentEnum, AsciiTable3 } from "ascii-table3";
-import { FlightHistoryRecord, HealthApiResponse, InitRegistrationResponse, InitServerResponse } from "../types/Responses";
+import { FlightHistoryRecord, HealthApiResponse, InitRegistrationResponse, InitServerResponse, UserDetailsData } from "../types/Responses";
 
 export class MessageFormatters {
   static generateHealthString(data: HealthApiResponse): string {
@@ -95,6 +95,60 @@ export class MessageFormatters {
       }`;
   }
 
+  static generateUserDetailsString(data: UserDetailsData, serverId: string): string {
+    if (!data) return "No user data found.";
+
+    // Format the registration date
+    const registeredDate = new Date(data.created_at).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+
+    // Build the message
+    let msg = "";
+
+    // Registration status
+    msg += `**Registration Status:** ${data.is_active ? "✅ Registered" : "❌ Not Active"}\n`;
+    msg += `**IFC Username:** ${data.if_community_id}\n`;
+    msg += `**Registered Since:** ${registeredDate}\n\n`;
+
+    // Current VA status - find affiliation by Discord server ID
+    if (data.current_va.is_member) {
+      // Note: We need to match by Discord server ID, but the API returns va_id
+      // The current_va object tells us if user is a member of THIS server's VA
+      const currentAffiliation = data.affiliations.find(aff => aff.is_active);
+      if (currentAffiliation) {
+        msg += `**Current VA:** ✅ Member of **${currentAffiliation.va_name}** (${currentAffiliation.va_code})\n`;
+        msg += `**Role:** ${formatRole(currentAffiliation.role)}\n`;
+        msg += `**Status:** ${currentAffiliation.is_active ? "Active" : "Inactive"}\n`;
+
+        const joinedDate = new Date(currentAffiliation.joined_at).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        });
+        msg += `**Joined:** ${joinedDate}\n`;
+      } else {
+        msg += `**Current VA:** ✅ Member\n`;
+        msg += `**Role:** ${formatRole(data.current_va.role)}\n`;
+      }
+    } else {
+      msg += `**Current VA:** ❌ Not a member of this Virtual Airline\n`;
+    }
+
+    // Other affiliations (show all affiliations since we can't reliably match by server ID)
+    if (data.affiliations.length > 1) {
+      msg += `\n**All Affiliations:**\n`;
+      data.affiliations.forEach(aff => {
+        const status = aff.is_active ? "✅" : "❌";
+        msg += `${status} **${aff.va_name}** (${aff.va_code}) - ${formatRole(aff.role)}\n`;
+      });
+    }
+
+    return msg;
+  }
+
 
 }
 
@@ -111,4 +165,13 @@ function shortenServer(server: string): string {
 function getViolations(rec: FlightHistoryRecord): number {
   // Placeholder — update this when violations are available in the record
   return rec.violations;
+}
+
+function formatRole(role: string): string {
+  const roleMap: { [key: string]: string } = {
+    "admin": "👑 Admin",
+    "staff": "⭐ Staff",
+    "pilot": "✈️ Pilot"
+  };
+  return roleMap[role.toLowerCase()] || role;
 }
