@@ -5,6 +5,7 @@ import * as initserver from "../commands/initServer";
 import * as live from "../commands/live";
 import * as pilotmanage from "../commands/pilot";
 import * as rollout from "../commands/rollout";
+import * as stats from "../commands/stats"
 import { DiscordInteraction } from "../types/DiscordInteraction";
 
 export type CommandHandler = {
@@ -18,5 +19,6 @@ export const commandMap: Record<string, CommandHandler> = {
     initserver,
 	live,
     pilotmanage,
-    rollout
+    rollout,
+    stats
 }

@@ -1,5 +1,5 @@
 import { AlignmentEnum, AsciiTable3 } from "ascii-table3";
-import { FlightHistoryRecord, HealthApiResponse, InitRegistrationResponse, InitServerResponse, UserDetailsData } from "../types/Responses";
+import { FlightHistoryRecord, HealthApiResponse, InitRegistrationResponse, InitServerResponse, UserDetailsData, ApiResponse, PilotStatsData } from "../types/Responses";
 
 export class MessageFormatters {
   static generateHealthString(data: HealthApiResponse): string {

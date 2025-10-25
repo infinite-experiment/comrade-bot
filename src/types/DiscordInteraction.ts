@@ -1,4 +1,4 @@
-import { ButtonInteraction, ChatInputCommandInteraction, InteractionReplyOptions, MessageFlags, ModalSubmitInteraction, StringSelectMenuInteraction } from "discord.js"
+import { ButtonInteraction, ChatInputCommandInteraction, InteractionReplyOptions, InteractionEditReplyOptions, MessageFlags, ModalSubmitInteraction, StringSelectMenuInteraction } from "discord.js"
 
 type AnyInteraction = ChatInputCommandInteraction | ModalSubmitInteraction | ButtonInteraction | StringSelectMenuInteraction;
 
@@ -23,7 +23,7 @@ export class DiscordInteraction {
         this._interaction.reply(message);
     }
 
-    public async editReply(message: InteractionReplyOptions | string) {
+    public async editReply(message: InteractionEditReplyOptions | string) {
         return this._interaction.editReply(message)
     }
 

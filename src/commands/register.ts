@@ -33,7 +33,7 @@ export async function execute(interaction: DiscordInteraction) {
     const isLinkedToVA = userDetails?.current_va?.is_member || false;
 
     // SCENARIO 1: User is already registered AND linked to this VA
-    if (isRegistered && isLinkedToVA) {
+    if (isRegistered && isLinkedToVA && userDetails) {
         const successEmbed = new EmbedBuilder()
             .setColor(0x00FF00)
             .setTitle("✅ Already Registered & Linked!")
@@ -60,7 +60,7 @@ export async function execute(interaction: DiscordInteraction) {
     }
 
     // SCENARIO 2: User is registered but NOT linked to this VA
-    if (isRegistered && !isLinkedToVA) {
+    if (isRegistered && !isLinkedToVA && userDetails) {
         const linkEmbed = new EmbedBuilder()
             .setColor(0xFFA500)
             .setTitle("🔗 Link to Virtual Airline")

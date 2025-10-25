@@ -97,12 +97,17 @@ export async function renderLiveFlights(records: LiveFlightRecord[], responseTim
     const footerH = 50;
     const totalH = tableH + footerH;
 
-    const canvas = createCanvas(tableW, totalH);
+    // Add 5px padding on all sides
+    const PADDING = 5;
+    const canvas = createCanvas(tableW + PADDING * 2, totalH + PADDING * 2);
     const ctx = canvas.getContext("2d");
 
     // Fill background with dark color first
     ctx.fillStyle = BG_ROW;
-    ctx.fillRect(0, 0, tableW, totalH);
+    ctx.fillRect(0, 0, tableW + PADDING * 2, totalH + PADDING * 2);
+
+    // Translate context to add padding offset
+    ctx.translate(PADDING, PADDING);
 
     // Format data with color coding for "Seen" column and alternating row backgrounds
     const styledData = dataRows.map((row, rowIndex) =>

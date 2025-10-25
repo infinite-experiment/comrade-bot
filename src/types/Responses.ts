@@ -98,3 +98,17 @@ export interface UserDetailsData {
 }
 
 export type UserDetailsResponse = ApiResponse<UserDetailsData>;
+
+export interface PilotStatsData {
+  provider_data: {
+    [key: string]: any;
+  };
+  metadata: {
+    provider_configured: boolean;
+    last_fetched: string;
+    cached: boolean;
+    va_name: string;
+  };
+}
+
+export type PilotStatsResponse = ApiResponse<PilotStatsData>;

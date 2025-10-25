@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse, LiveFlightRecord, UserDetailsData } from "../types/Responses";
+import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse, LiveFlightRecord, UserDetailsData, PilotStatsData } from "../types/Responses";
 import { MetaInfo } from "../types/DiscordInteraction";
 import { generateMetaHeaders } from "../helpers/utils";
 import { UnauthorizedError } from "../helpers/UnauthorizedException";
@@ -323,6 +323,35 @@ export class ApiService {
             return response;
         } catch (err) {
             console.error("[ApiService.linkUserToVA]", err);
+            throw err;
+        }
+    }
+
+    static async getPilotStats(meta: MetaInfo): Promise<ApiResponse<PilotStatsData>> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/pilot/stats`, {
+                method: "GET",
+                headers: generateMetaHeaders(meta),
+            });
+
+            if (res.status === 401) {
+                const message = await res.text();
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
+
+            if (!res.ok) {
+                throw new Error(`Failed to fetch pilot stats: ${res.status} ${res.statusText}`);
+            }
+
+            const response: ApiResponse<PilotStatsData> = await res.json() as ApiResponse<PilotStatsData>;
+
+            if (!response.data) {
+                throw new Error("No data received in API response");
+            }
+
+            return response;
+        } catch (err) {
+            console.error("[ApiService.getPilotStats]", err);
             throw err;
         }
     }
