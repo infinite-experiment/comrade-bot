@@ -6,8 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev src/index.ts",
-    "deploy-cmd": "ts-node src/deploy-commands.ts",
-    "deploy-commands": "node dist/deploy-commands.js",
+    "deploy": "node dist/deploy-commands.js",
+    "deploy:local": "node dist/deploy-commands.js local",
+    "deploy:global": "node dist/deploy-commands.js global",
+    "deploy:dev": "ts-node src/deploy-commands.ts",
+    "deploy:dev:local": "ts-node src/deploy-commands.ts local",
+    "deploy:dev:global": "ts-node src/deploy-commands.ts global",
     "build": "tsc"
   },
   "repository": {

@@ -1,36 +1,30 @@
-# ─── Stage 1: Builder ─────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+# ─── Stage 1: Builder ────────────────────────────────────────────────────────
+FROM node:20-slim AS builder
 WORKDIR /app
 
-# Install build dependencies for node-canvas
-RUN apk add --no-cache \
+# Install build dependencies for canvas and ts compilation
+RUN apt-get update && apt-get install -y \
   python3 \
-  make \
-  g++ \
-  pixman-dev \
-  cairo-dev \
-  pango-dev \
-  jpeg-dev \
-  giflib-dev \
-  librsvg-dev \
-  build-base
+  build-essential \
+  libcairo2-dev \
+  libpango1.0-dev \
+  libjpeg-dev \
+  libgif-dev \
+  librsvg2-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-# Set Python path for node-gyp
-ENV PYTHON=/usr/bin/python3
-
-# Install full dependencies including dev
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
-# Transpile TypeScript → JavaScript
 COPY tsconfig.json ./
 COPY src ./src
-RUN npx tsc
-# ─── Stage 2: Production ──────────────────────────────────────────────────────
+RUN npm run build
+
+# ─── Stage 2: Production ─────────────────────────────────────────────────────
 FROM node:20-slim AS prod
 WORKDIR /app
 
-# Install runtime dependencies for canvas
+# Runtime dependencies for canvas
 RUN apt-get update && apt-get install -y \
   python3 \
   libcairo2 \
@@ -40,9 +34,13 @@ RUN apt-get update && apt-get install -y \
   librsvg2-2 \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
+# Optional: run deploy commands
+# CMD ["node", "dist/deploy-commands.js"]
+
+# Default command (your bot)
 CMD ["node", "dist/index.js"]

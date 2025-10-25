@@ -70,3 +70,45 @@ export interface LiveFlightRecord {
   destination: string;
   lastReport: string;
 }
+
+export interface VARole {
+  va_id: string;
+  va_name: string;
+  va_code: string;
+  role: string;
+  is_active: boolean;
+  joined_at: string;
+}
+
+export interface CurrentVA {
+  is_member: boolean;
+  role: string;
+  is_active: boolean;
+}
+
+export interface UserDetailsData {
+  user_id: string;
+  discord_id: string;
+  if_community_id: string;
+  if_api_id: string;
+  is_active: boolean;
+  created_at: string;
+  affiliations: VARole[];
+  current_va: CurrentVA;
+}
+
+export type UserDetailsResponse = ApiResponse<UserDetailsData>;
+
+export interface PilotStatsData {
+  provider_data: {
+    [key: string]: any;
+  };
+  metadata: {
+    provider_configured: boolean;
+    last_fetched: string;
+    cached: boolean;
+    va_name: string;
+  };
+}
+
+export type PilotStatsResponse = ApiResponse<PilotStatsData>;

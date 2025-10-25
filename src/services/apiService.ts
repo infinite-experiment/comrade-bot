@@ -1,8 +1,9 @@
 import fetch from "node-fetch";
-import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse, LiveFlightRecord } from "../types/Responses";
+import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse, LiveFlightRecord, UserDetailsData, PilotStatsData } from "../types/Responses";
 import { MetaInfo } from "../types/DiscordInteraction";
 import { generateMetaHeaders } from "../helpers/utils";
 import { UnauthorizedError } from "../helpers/UnauthorizedException";
+import { PermissionDeniedError } from "../helpers/PermissionDeniedException";
 
 const API_URL = process.env.API_URL ?? "http://localhost:8080";
 
@@ -26,13 +27,30 @@ export class ApiService {
         }
     }
 
-    static async initiateRegistration(meta: MetaInfo, ifcId: string, lastFlight: string): Promise<InitRegistrationResponse> {
+    static async initiateRegistration(
+        meta: MetaInfo,
+        ifcId: string,
+        lastFlight: string,
+        callsign?: string
+    ): Promise<InitRegistrationResponse> {
         try {
-            const payload = JSON.stringify({ ifc_id: ifcId, last_flight: lastFlight })
+            const payload: any = {
+                ifc_id: ifcId,
+                last_flight: lastFlight
+            };
+
+            // Add callsign if provided (for VA servers)
+            if (callsign) {
+                payload.callsign = callsign;
+            }
+
             const res = await fetch(`${API_URL}/api/v1/user/register/init`, {
                 method: "POST",
-                headers: generateMetaHeaders(meta),
-                body: payload
+                headers: {
+                    ...generateMetaHeaders(meta),
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
             });
 
             if (res.status === 401) {
@@ -40,6 +58,10 @@ export class ApiService {
                 throw new UnauthorizedError(message || "Unauthorized");
             }
 
+            if (res.status === 403) {
+                const body = await res.json() as ApiResponse<any>;
+                throw new PermissionDeniedError(body.message || "Forbidden");
+            }
 
             if (!res.ok) {
                 throw new Error(`Failed to fetch initRegistration: ${res.status} ${res.statusText}`);
@@ -61,21 +83,31 @@ export class ApiService {
     static async initiateServerRegistration(
         meta: MetaInfo,
         code: string,
-        name: string
+        name: string,
+        callsignPrefix: string,
+        callsignSuffix: string
     ): Promise<InitServerResult> {
         try {
             const res = await fetch(`${API_URL}/api/v1/server/init`, {
                 method: "POST",
                 headers: generateMetaHeaders(meta),
-                body: JSON.stringify({ va_code: code, name }),
+                body: JSON.stringify({
+                    va_code: code,
+                    name,
+                    callsign_prefix: callsignPrefix,
+                    callsign_suffix: callsignSuffix
+                }),
             });
+
             if (res.status === 401) {
                 const message = await res.text(); // plain-text body
                 throw new UnauthorizedError(message || "Unauthorized");
             }
 
-            // const raw = await res.text();
-            // console.log("RAW RESPONSE:\n", raw);
+            if (res.status === 403) {
+                const body = await res.json() as ApiResponse<any>;
+                throw new PermissionDeniedError(body.message || "Forbidden");
+            }
 
             // Always try to read the JSON body (success or error)
             const body: InitServerResult = await res.json() as InitServerResult;
@@ -191,6 +223,135 @@ export class ApiService {
         } catch (err) {
             console.error("[ApiService.assignUserRole]", err);
             console.log(err)
+            throw err;
+        }
+    }
+
+    static async getUserDetails(meta: MetaInfo): Promise<UserDetailsData> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/user/details`, {
+                method: "GET",
+                headers: generateMetaHeaders(meta),
+            });
+
+            if (res.status === 401) {
+                const message = await res.text();
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
+
+            if (!res.ok) {
+                throw new Error(`Failed to fetch user details: ${res.status} ${res.statusText}`);
+            }
+
+            const response: ApiResponse<UserDetailsData> = await res.json() as ApiResponse<UserDetailsData>;
+
+            if (!response.data) {
+                throw new Error("No data received in API response");
+            }
+
+            return response.data;
+        } catch (err) {
+            console.error("[ApiService.getUserDetails]", err);
+            throw err;
+        }
+    }
+
+    /**
+     * Verifies if the current user has god-mode access
+     * Returns true if user is god-mode, false otherwise
+     */
+    static async verifyGodMode(meta: MetaInfo): Promise<boolean> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/admin/verify-god`, {
+                method: "GET",
+                headers: generateMetaHeaders(meta),
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                // Not authorized or forbidden = not god mode
+                return false;
+            }
+
+            if (!res.ok) {
+                console.error("[ApiService.verifyGodMode] Unexpected status:", res.status);
+                return false;
+            }
+
+            const response: ApiResponse<{ is_god: boolean }> = await res.json() as ApiResponse<{ is_god: boolean }>;
+            return response.data?.is_god || false;
+        } catch (err) {
+            console.error("[ApiService.verifyGodMode]", err);
+            return false;
+        }
+    }
+
+    /**
+     * Links an existing registered user to a VA with their callsign
+     * This is for users who are already registered but not linked to the current VA
+     */
+    static async linkUserToVA(meta: MetaInfo, callsign: string): Promise<ApiResponse<any>> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/user/register/link`, {
+                method: "POST",
+                headers: {
+                    ...generateMetaHeaders(meta),
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ callsign })
+            });
+
+            if (res.status === 401) {
+                const message = await res.text();
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
+
+            if (res.status === 403) {
+                const body = await res.json() as ApiResponse<any>;
+                throw new PermissionDeniedError(body.message || "Forbidden");
+            }
+
+            if (!res.ok) {
+                throw new Error(`Failed to link user to VA: ${res.status} ${res.statusText}`);
+            }
+
+            const response: ApiResponse<any> = await res.json() as ApiResponse<any>;
+
+            if (!response.data) {
+                throw new Error("No data received in API response");
+            }
+
+            return response;
+        } catch (err) {
+            console.error("[ApiService.linkUserToVA]", err);
+            throw err;
+        }
+    }
+
+    static async getPilotStats(meta: MetaInfo): Promise<ApiResponse<PilotStatsData>> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/pilot/stats`, {
+                method: "GET",
+                headers: generateMetaHeaders(meta),
+            });
+
+            if (res.status === 401) {
+                const message = await res.text();
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
+
+            if (!res.ok) {
+                throw new Error(`Failed to fetch pilot stats: ${res.status} ${res.statusText}`);
+            }
+
+            const response: ApiResponse<PilotStatsData> = await res.json() as ApiResponse<PilotStatsData>;
+
+            if (!response.data) {
+                throw new Error("No data received in API response");
+            }
+
+            return response;
+        } catch (err) {
+            console.error("[ApiService.getPilotStats]", err);
             throw err;
         }
     }
