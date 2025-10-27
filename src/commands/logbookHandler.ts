@@ -15,7 +15,7 @@ import {
 } from "discord.js";
 
 import { ApiService } from "../services/apiService";
-import { renderFlightHistory } from "../helpers/TableRenderer";
+import { renderLogbookTable } from "../helpers/LogbookTableRenderer";
 import { DiscordInteraction } from "../types/DiscordInteraction";
 import { MessageFormatters } from "../helpers/messageFormatter";
 import { FlightHistoryPage } from "../types/Responses";
@@ -50,7 +50,7 @@ export async function handleFlightHistory(
   // ── 3) Fetch data ──────────────────────────────
   // const apiResp = await ApiService.getUserLogbook(di.getMetaInfo(), ifcId, page);
 
-  let apiResp: FlightHistoryPage = { records: [], page: 0, error: "" };  // fallback shape
+  let apiResp: FlightHistoryPage & { response_time?: string } = { records: [], page: 0, error: "" };  // fallback shape
 
   try {
     apiResp = await ApiService.getUserLogbook(di.getMetaInfo(), ifcId, page);
@@ -76,8 +76,13 @@ export async function handleFlightHistory(
     return;
   }
 
-  // ── 4) Render PNG ──────────────────────────────
-  const png = await renderFlightHistory(apiResp.records);
+  // ── 4) Render PNG with modern theme ─────────────
+  // Extract response time (format: "45ms" → 45)
+  const responseTimeMs = apiResp.response_time
+    ? parseInt(apiResp.response_time.replace("ms", ""), 10)
+    : undefined;
+
+  const png = await renderLogbookTable(apiResp.records, responseTimeMs);
   const file = new AttachmentBuilder(png, { name: "logbook.png" });
   const msg = MessageFormatters.makeFlightHistoryTable(apiResp.records)
 
