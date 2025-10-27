@@ -9,6 +9,7 @@ import { data as pilotCmd } from "../commands/pilot";
 import { data as liveCmd } from "../commands/live";
 import { data as rolloutCmd } from "../commands/rollout";
 import { data as statsCmd } from "../commands/stats";
+import { data as logCmd } from "../commands/log";
 
 /**
  * Command registry
@@ -23,7 +24,8 @@ export const COMMANDS: (SlashCommandBuilder | SlashCommandOptionsOnlyBuilder)[] 
     liveCmd,
     pilotCmd,
     rolloutCmd,
-    statsCmd
+    statsCmd,
+    logCmd
 ];
 
 /**

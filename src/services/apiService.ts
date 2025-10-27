@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse, LiveFlightRecord, UserDetailsData, PilotStatsData } from "../types/Responses";
+import { HealthApiResponse, InitRegistrationResponse, ApiResponse, FlightHistoryPage, InitServerResponse, LiveFlightRecord, UserDetailsData, PilotStatsData, PirepConfigResponse, PirepSubmitResponse, PirepSubmitRequest } from "../types/Responses";
 import { MetaInfo } from "../types/DiscordInteraction";
 import { generateMetaHeaders } from "../helpers/utils";
 import { UnauthorizedError } from "../helpers/UnauthorizedException";
@@ -125,7 +125,7 @@ export class ApiService {
     }
 
 
-    static async getUserLogbook(meta: MetaInfo, ifcId: string, page: number): Promise<FlightHistoryPage> {
+    static async getUserLogbook(meta: MetaInfo, ifcId: string, page: number): Promise<FlightHistoryPage & { response_time: string }> {
         try {
             const res = await fetch(`${API_URL}/api/v1/user/${ifcId}/flights?page=${page}`, {
                 method: "GET",
@@ -147,7 +147,11 @@ export class ApiService {
                 throw new Error("No data received in API response");
             }
 
-            return response.data;
+            // Include the response_time from the API response
+            return {
+                ...response.data,
+                response_time: response.response_time
+            };
 
 
         } catch (err) {
@@ -352,6 +356,81 @@ export class ApiService {
             return response;
         } catch (err) {
             console.error("[ApiService.getPilotStats]", err);
+            throw err;
+        }
+    }
+
+    /**
+     * Fetch PIREP configuration for the current user's flight
+     * Returns available flight modes with validation status and field definitions
+     */
+    static async getPirepConfig(meta: MetaInfo): Promise<PirepConfigResponse> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/pireps/config`, {
+                method: "GET",
+                headers: generateMetaHeaders(meta),
+            });
+
+            if (res.status === 401) {
+                const message = await res.text();
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
+
+            if (!res.ok) {
+                let errorMessage = `Failed to fetch PIREP config: ${res.status} ${res.statusText}`;
+                try {
+                    const errorData = await res.json() as any;
+                    if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (parseErr) {
+                    // JSON parsing failed, use generic error message
+                }
+                throw new Error(errorMessage);
+            }
+
+            const response: PirepConfigResponse = await res.json() as PirepConfigResponse;
+
+            if (!response.data) {
+                throw new Error("No data received in API response");
+            }
+
+            return response;
+        } catch (err) {
+            console.error("[ApiService.getPirepConfig]", err);
+            throw err;
+        }
+    }
+
+    /**
+     * Submit a PIREP for filing
+     * Handles all flight modes with mode-specific validation
+     */
+    static async submitPirep(meta: MetaInfo, pirepData: PirepSubmitRequest): Promise<PirepSubmitResponse> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/pireps/submit`, {
+                method: "POST",
+                headers: {
+                    ...generateMetaHeaders(meta),
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(pirepData)
+            });
+
+            if (res.status === 401) {
+                const message = await res.text();
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
+
+            if (!res.ok) {
+                const errorResponse = await res.json() as PirepSubmitResponse;
+                return errorResponse;
+            }
+
+            const response: PirepSubmitResponse = await res.json() as PirepSubmitResponse;
+            return response;
+        } catch (err) {
+            console.error("[ApiService.submitPirep]", err);
             throw err;
         }
     }
