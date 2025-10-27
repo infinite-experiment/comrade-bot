@@ -286,7 +286,7 @@ export class InteractionRouter {
                     await modalInteraction.editReply({
                         embeds: [{
                             title: "❌ PIREP Submission Failed",
-                            description: `Error: ${responseData?.error_message || responseData?.message || "Unknown error occurred"}`,
+                            description: `Error: ${responseData?.error_message || submitResponse.message || "Unknown error occurred"}`,
                             color: 0xff0000,
                             timestamp: new Date().toISOString(),
                         }]

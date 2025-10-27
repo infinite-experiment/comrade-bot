@@ -173,6 +173,8 @@ export interface UserInfo {
   current_livery: string;
   current_route: string;
   current_flight_status: string;
+  current_altitude?: number;
+  current_speed?: number;
 }
 
 export interface PirepConfigData {
@@ -192,10 +194,12 @@ export interface PirepSubmitRequest {
   passengers?: number;
 }
 
-export interface PirepSubmitResponse {
+export interface PirepSubmitData {
   success: boolean;
   message: string;
   pirep_id?: string;
   error_type?: string;
   error_message?: string;
 }
+
+export type PirepSubmitResponse = ApiResponse<PirepSubmitData>;

@@ -32,6 +32,9 @@ export async function logModeSelectionHandler(interaction: DiscordInteraction): 
             return;
         }
 
+        // Extract user info from config
+        const userInfo = pirepConfig.data.user_info;
+
         // Find the selected mode
         const selectedMode = pirepConfig.data.available_modes.find(m => m.mode_id === modeId);
 
@@ -74,7 +77,7 @@ export async function logModeSelectionHandler(interaction: DiscordInteraction): 
             // OR use current route if it's valid for this mode
             if (selectedMode.autofill_route) {
                 routeField.setValue(selectedMode.autofill_route);
-            } else if (selectedMode.status === "valid") {
+            } else if (selectedMode.status === "valid" && userInfo.current_route) {
                 // Current route is valid for this mode, prefill it
                 routeField.setValue(userInfo.current_route);
             }
