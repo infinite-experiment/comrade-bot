@@ -26,7 +26,7 @@ export async function execute(interaction: DiscordInteraction) {
 
     // Fetch Discord server icon
     const guild = _interaction.guild;
-    const iconURL = guild?.iconURL({ format: 'png', size: 256 }) || 'https://cdn.discordapp.com/embed/avatars/0.png';
+    const iconURL = guild?.iconURL({ extension: 'png', size: 256 }) || 'https://cdn.discordapp.com/embed/avatars/0.png';
 
     // Validate VA code
     if (!await CommandErrorHandler.validateInput(
