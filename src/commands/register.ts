@@ -4,9 +4,11 @@ import {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
+    AttachmentBuilder,
 } from "discord.js";
 import { DiscordInteraction } from "../types/DiscordInteraction";
 import { ApiService } from "../services/apiService";
+import * as path from "path";
 
 export const data = new SlashCommandBuilder()
     .setName("register")
@@ -50,7 +52,7 @@ export async function execute(interaction: DiscordInteraction) {
                     inline: true
                 }
             )
-            .setFooter({ text: "Use /help to learn how to use Comrade Bot • Contact staff to update callsign" });
+            .setFooter({ text: "Use /help for more info • Contact staff to change callsign" });
 
         await chatInput.reply({
             embeds: [successEmbed],
@@ -64,21 +66,11 @@ export async function execute(interaction: DiscordInteraction) {
         const linkEmbed = new EmbedBuilder()
             .setColor(0xFFA500)
             .setTitle("🔗 Link to Virtual Airline")
-            .setDescription(`You're registered as **${userDetails.if_community_id}**, but not yet linked to this Virtual Airline.`)
+            .setDescription(`You're registered as **${userDetails.if_community_id}**, but not linked to this VA.\n\nEnter your callsign number (1-5 digits) to link.`)
             .addFields(
                 {
-                    name: "What you need:",
-                    value: "• Your **callsign number** (1-5 digits)\n• This combines with the VA's prefix/suffix pattern",
-                    inline: false
-                },
-                {
-                    name: "Example",
-                    value: "If the VA suffix is `VA` and you enter `001`, flights ending with `001VA` or `001 VA` will be tracked.",
-                    inline: false
-                },
-                {
                     name: "📌 Note",
-                    value: "Callsign can only be set once. Contact staff if you need to change it later.",
+                    value: "Callsign is locked after you set it. Contact staff if you need to change it.",
                     inline: false
                 }
             )
@@ -113,46 +105,44 @@ async function showNewUserRegistration(chatInput: any) {
     const infoEmbed = new EmbedBuilder()
         .setColor(0x0099FF)
         .setTitle("✈️ User Registration")
-        .setDescription("Register with Comrade Bot to access your flight data and Virtual Airline features.")
+        .setDescription("Register with Comrade Bot using your Infinite Flight Community account.")
         .addFields(
             {
-                name: "📝 IFC Username (Required)",
-                value: "Your Infinite Flight Community username.\nExample: `john_doe123`, `pilot_jane`\n\n" +
-                    "⚠️ **Important:** Use your IFC username, NOT your display name!",
+                name: "📝 IFC Username",
+                value: "Your Infinite Flight Community login username.\nExample: `john_doe123`",
                 inline: false
             },
             {
-                name: "🛫 Last Valid Flight (Required)",
-                value: "Your most recent flight with both **origin** and **destination** airports.\n" +
-                    "Format: `ORIGIN-DESTINATION` (4-letter ICAO codes)\n" +
-                    "Example: `KJFK-EGLL`, `VABB-OMDB`\n\n" +
-                    "⚠️ **Must be a completed flight from your logbook!**",
+                name: "🛫 Last Flight",
+                value: "Your most recent flight (origin-destination).\nFormat: `EGLL-KSEA` (4-letter ICAO codes)\n\nPick the highlighted flight from your Infinite Flight logbook (see image below).",
                 inline: false
             },
             {
-                name: "🔢 Callsign Number (Optional - VA Members Only)",
-                value: "If this Discord server is a **registered Virtual Airline**, you can link your pilot profile.\n\n" +
-                    "**Your callsign number** (usually 1-5 digits): `001`, `123`, `1234`\n" +
-                    "This combines with your VA's prefix/suffix to form your full callsign.\n\n" +
-                    "Example: If VA suffix is `VA` and your number is `001`, flights with callsign ending in `001VA` or `001 VA` will be tracked.\n\n" +
-                    "📌 *If not provided now, ask a staff member to update it later.*",
+                name: "🔢 Callsign (Optional)",
+                value: "1-5 digits for the VA (if this server is a registered VA).\nExample: `001`, `123`",
                 inline: false
             },
         )
-        .setFooter({ text: "Click 'Proceed' to continue with registration" });
+        .setImage("attachment://register_logbook.png")
+        .setFooter({ text: "Click 'Proceed' to continue" });
 
     // Create proceed button for new registration
     const proceedButton = new ButtonBuilder()
         .setCustomId("register_new")
-        .setLabel("Proceed with Registration")
+        .setLabel("Proceed")
         .setStyle(ButtonStyle.Success)
         .setEmoji("✅");
 
     const row = new ActionRowBuilder<ButtonBuilder>()
         .addComponents(proceedButton);
 
+    // Load the logbook reference image
+    const imagePath = path.join(__dirname, "../../docs/images/register_logbook.png");
+    const attachment = new AttachmentBuilder(imagePath, { name: "register_logbook.png" });
+
     await chatInput.reply({
         embeds: [infoEmbed],
+        files: [attachment],
         components: [row],
         ephemeral: true
     });

@@ -7,6 +7,8 @@ import * as pilotmanage from "../commands/pilot";
 import * as rollout from "../commands/rollout";
 import * as stats from "../commands/stats";
 import * as log from "../commands/log";
+import * as help from "../commands/help";
+import * as dashboard from "../commands/dashboard";
 import { DiscordInteraction } from "../types/DiscordInteraction";
 
 export type CommandHandler = {
@@ -22,5 +24,7 @@ export const commandMap: Record<string, CommandHandler> = {
     pilotmanage,
     rollout,
     stats,
-    log
+    log,
+    help,
+    dashboard
 }

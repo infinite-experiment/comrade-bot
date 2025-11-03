@@ -54,25 +54,41 @@ export async function handleFlightHistory(
 
   try {
     apiResp = await ApiService.getUserLogbook(di.getMetaInfo(), ifcId, page);
-  } catch (err) {
+  } catch (err: any) {
     if (err instanceof UnauthorizedError) {
-      const msg = `❌ You're not authorized to view this logbook.\n${err.message}`;
-      if (fromSlash) await chat!.editReply(msg);
-      else await btn!.followUp({ content: msg });
+      const errorEmbed = {
+        title: "Permission Denied",
+        description: `❌ You don't have permission to view this logbook.\n\n**Why?**\nOnly Staff and Admin members can view logbooks.\n\n**How to fix:**\nCheck your role with \`/status\`. If you should have access, ask your VA admin to grant Staff permissions.`,
+        color: 0xff0000,
+        timestamp: new Date().toISOString()
+      };
+      if (fromSlash) await chat!.editReply({ embeds: [errorEmbed] });
+      else await btn!.followUp({ embeds: [errorEmbed] });
       return;
     }
 
     console.error("Unexpected error while fetching logbook:", err);
-    const msg = "❌ Unexpected error while fetching logbook.";
-    if (fromSlash) await chat!.editReply(msg);
-    else await btn!.followUp({ content: msg });
+    const errorMsg = err?.message || "Unknown error";
+    const errorEmbed = {
+      title: "Error Fetching Logbook",
+      description: `❌ An unexpected error occurred while fetching the logbook.\n\n**Error:** ${errorMsg}\n\n**Please try:**\n• Double-check the IFC username\n• Ensure the pilot is registered with the VA\n• Try again in a few moments\n• Contact support if the issue persists`,
+      color: 0xff0000,
+      timestamp: new Date().toISOString()
+    };
+    if (fromSlash) await chat!.editReply({ embeds: [errorEmbed] });
+    else await btn!.followUp({ embeds: [errorEmbed] });
     return;
   }
 
   if (!apiResp?.records?.length) {
-    const msg = "❌ No flight history found for the provided IFC ID.";
-    if (fromSlash) await chat!.editReply(msg);
-    else await btn!.followUp({ content: msg });
+    const errorEmbed = {
+      title: "No Flight History Found",
+      description: `❌ No flights found for **${ifcId}**.\n\n**Possible reasons:**\n• The pilot hasn't registered with this VA yet\n• The IFC username might be incorrect (check spelling)\n• The pilot has no recorded flights yet\n\n**Next steps:**\n• Verify the pilot's IFC Community username (not their display name)\n• Ask the pilot to run \`/register\` first\n• Use \`/status\` to confirm they're linked to this VA`,
+      color: 0xff9900,
+      timestamp: new Date().toISOString()
+    };
+    if (fromSlash) await chat!.editReply({ embeds: [errorEmbed] });
+    else await btn!.followUp({ embeds: [errorEmbed] });
     return;
   }
 
@@ -143,7 +159,13 @@ export function registerLogbookHandlers(client: Client): void {
     } catch (err) {
       console.error("logbook handler error", err);
       if (raw.isRepliable() && !raw.replied && !raw.deferred) {
-        await raw.reply({ content: "Unexpected error while fetching logbook."});
+        const errorEmbed = {
+          title: "Error",
+          description: "❌ An unexpected error occurred while processing your request.\n\nPlease try again or contact support if the issue persists.",
+          color: 0xff0000,
+          timestamp: new Date().toISOString()
+        };
+        await raw.reply({ embeds: [errorEmbed] });
       }
     }
   });

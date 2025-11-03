@@ -85,7 +85,8 @@ export class ApiService {
         code: string,
         name: string,
         callsignPrefix: string,
-        callsignSuffix: string
+        callsignSuffix: string,
+        iconURL?: string
     ): Promise<InitServerResult> {
         try {
             const res = await fetch(`${API_URL}/api/v1/server/init`, {
@@ -95,7 +96,8 @@ export class ApiService {
                     va_code: code,
                     name,
                     callsign_prefix: callsignPrefix,
-                    callsign_suffix: callsignSuffix
+                    callsign_suffix: callsignSuffix,
+                    ...(iconURL && { icon_url: iconURL })
                 }),
             });
 
@@ -431,6 +433,48 @@ export class ApiService {
             return response;
         } catch (err) {
             console.error("[ApiService.submitPirep]", err);
+            throw err;
+        }
+    }
+
+    /**
+     * Generate a presigned dashboard link for web UI access
+     * Returns a single-use URL that expires in 15 minutes
+     */
+    static async generateDashboardLink(meta: MetaInfo): Promise<ApiResponse<{ url: string; expires_in: number }>> {
+        try {
+            const res = await fetch(`${API_URL}/api/v1/auth/generate-dashboard-link`, {
+                method: "POST",
+                headers: {
+                    ...generateMetaHeaders(meta),
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({})
+            });
+
+            if (res.status === 401) {
+                const message = await res.text();
+                throw new UnauthorizedError(message || "Unauthorized");
+            }
+
+            if (res.status === 403) {
+                const body = await res.json() as ApiResponse<any>;
+                throw new PermissionDeniedError(body.message || "Forbidden");
+            }
+
+            if (!res.ok) {
+                throw new Error(`Failed to generate dashboard link: ${res.status} ${res.statusText}`);
+            }
+
+            const response: ApiResponse<{ url: string; expires_in: number }> = await res.json() as ApiResponse<{ url: string; expires_in: number }>;
+
+            if (!response.data) {
+                throw new Error("No data received in API response");
+            }
+
+            return response;
+        } catch (err) {
+            console.error("[ApiService.generateDashboardLink]", err);
             throw err;
         }
     }

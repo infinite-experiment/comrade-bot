@@ -25,24 +25,53 @@ export async function execute(interaction: DiscordInteraction) {
             const startTime = Date.now();
             flights = await ApiService.getLiveFlights(meta);
             responseTime = Date.now() - startTime;
-        } catch (err) {
+        } catch (err: any) {
             console.error("[getLiveFlights]", err);
 
             if (err instanceof UnauthorizedError) {
                 await interaction.editReply({
-                    content: `❌ You're not authorized to view live flights.\n${err.message}`,
+                    embeds: [{
+                        title: "Not Registered",
+                        description: "❌ You must be registered to view live flights.\n\nUse `/register` to get started.",
+                        color: 0xff0000,
+                        timestamp: new Date().toISOString()
+                    }]
                 });
                 return;
             }
 
+            // Check for 403 Forbidden (not registered/authorized)
+            if (err.message?.includes("403") || err.message?.includes("Forbidden")) {
+                await interaction.editReply({
+                    embeds: [{
+                        title: "Not Registered",
+                        description: "❌ You must be registered to view live flights.\n\nUse `/register` to get started.",
+                        color: 0xff0000,
+                        timestamp: new Date().toISOString()
+                    }]
+                });
+                return;
+            }
+
+            // Generic error
             await interaction.editReply({
-                content: "❌ Failed to fetch live flights due to an unexpected error.",
+                embeds: [{
+                    title: "Error",
+                    description: "❌ Failed to fetch live flights.\n\nPlease try again later or contact support.",
+                    color: 0xff0000,
+                    timestamp: new Date().toISOString()
+                }]
             });
             return;
         }
         if (!flights || flights.length === 0) {
             await interaction.editReply({
-                content: "No live flights found for this VA.",
+                embeds: [{
+                    title: "No Live Flights",
+                    description: "No live flights currently active for this VA.",
+                    color: 0xff9900,
+                    timestamp: new Date().toISOString()
+                }]
             });
             return;
         }
@@ -61,11 +90,21 @@ export async function execute(interaction: DiscordInteraction) {
         // Check if we already deferred
         if (interaction.deferred) {
             await interaction.editReply({
-                content: "An error occurred while fetching live flights."
+                embeds: [{
+                    title: "Error",
+                    description: "❌ An unexpected error occurred.\n\nPlease try again or contact support.",
+                    color: 0xff0000,
+                    timestamp: new Date().toISOString()
+                }]
             });
         } else {
             await interaction.reply({
-                content: "An error occurred while fetching live flights."
+                embeds: [{
+                    title: "Error",
+                    description: "❌ An unexpected error occurred.\n\nPlease try again or contact support.",
+                    color: 0xff0000,
+                    timestamp: new Date().toISOString()
+                }]
             });
         }
     }

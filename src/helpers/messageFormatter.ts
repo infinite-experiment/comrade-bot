@@ -91,8 +91,10 @@ export class MessageFormatters {
       .join("\n");
 
     // Only add the links block if at least one exists
+    const dashboardInfo = "\n\n📊 **View Flight Route Maps:**\nUse `/dashboard` in the web app to see interactive flight route maps with altitude gradients for these flights!";
+
     return `${header}\n${footer}${links ? `\n${links}` : ""
-      }`;
+      }${dashboardInfo}`;
   }
 
   static generateUserDetailsString(data: UserDetailsData, serverId: string): string {
