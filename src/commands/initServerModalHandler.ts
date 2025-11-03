@@ -24,6 +24,10 @@ export async function execute(interaction: DiscordInteraction) {
     const callsignPrefix = _interaction.fields.getTextInputValue("callsignPrefix")?.trim() || "";
     const callsignSuffix = _interaction.fields.getTextInputValue("callsignSuffix")?.trim() || "";
 
+    // Fetch Discord server icon
+    const guild = _interaction.guild;
+    const iconURL = guild?.iconURL({ format: 'png', size: 256 }) || 'https://cdn.discordapp.com/embed/avatars/0.png';
+
     // Validate VA code
     if (!await CommandErrorHandler.validateInput(
         interaction, vaCode, "VA code", ValidationPatterns.VA_CODE, 3, 5
@@ -57,7 +61,8 @@ export async function execute(interaction: DiscordInteraction) {
             vaCode,
             vaName,
             callsignPrefix,
-            callsignSuffix
+            callsignSuffix,
+            iconURL
         );
 
         // Check if response contains data

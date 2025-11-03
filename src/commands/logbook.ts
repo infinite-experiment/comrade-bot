@@ -15,7 +15,5 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: DiscordInteraction) {
     const page = 1;
-    console.log("HI")
-
     await handleFlightHistory(interaction, page);
 }

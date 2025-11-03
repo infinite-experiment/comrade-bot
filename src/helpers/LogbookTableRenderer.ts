@@ -124,7 +124,7 @@ export async function renderLogbookTable(
       Math.max(
         ctxMeasure.measureText(header[col]).width,
         ...dataRows.map((row) => ctxMeasure.measureText(row[col]).width),
-      ) + 16,
+      ) + 56,
     ),
   );
 
