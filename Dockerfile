@@ -39,6 +39,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/docs ./docs
 
 # Optional: run deploy commands
 # CMD ["node", "dist/deploy-commands.js"]
